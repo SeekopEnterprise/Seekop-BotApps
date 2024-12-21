@@ -160,7 +160,7 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
 //                        buscarEjecutivo(getConnectionAux().getString("IdEjecutivoValuacion"));
                         campos = "    \"Valuador\": \"" + getNombreCompletoEjecutivo() + "\",\n"
                                 + "    \"PropuestaInicial\": \"" + getConnectionAux().getString("IdStatus") + "\",\n"
-                                + "    \"PropuestaActual\": \"" + getConnectionAux().getString("IdStatus") + "\",\n"
+                               // + "    \"PropuestaActual\": \"" + getPropuestaActual(idValuacion) + "\",\n"
                                 + "    \"Modelo\": \"" + getConnectionAux().getString("ModeloActual") + "\",\n"
                                 + "    \"Marca\": \"" + getConnectionAux().getString("NombreMarca") + "\",\n"
                                 + "    \"Auto\": \"" + getConnectionAux().getString("NombreAuto") + "\",\n"
@@ -205,8 +205,12 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                                     }
                                 }
                             }
-                            valuacionMecanica.substring(0, valuacionMecanica.length() - 1);
+                           if(!valuacionMecanica.isEmpty())
+                           {
+                                valuacionMecanica = valuacionMecanica.substring(0, valuacionMecanica.length() - 1); 
+                           }
                             valuacionMecanica = "\"Mecanico\": [" + valuacionMecanica + "],";
+     
                         }
                         sql = "SELECT \n"
                                 + "    cll.IdChecklist,\n"
@@ -243,6 +247,38 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
         }
         return campos;
     }
+    
+    
+   private String getPropuestaActual(String idValuacion) {
+    String propuestaActual = "0";
+    
+        String sql = "SELECT \n"
+                + "Propuesta1, Propuesta2, Propuesta3, Propuesta4, Propuesta5\n"
+                + "FROM\n"
+                + getAuxdbDistribuidor() + ".valuacionprecios\n"
+                + "WHERE\n"
+                + "IdValuacion = '" + idValuacion + "'";
+
+        if (getConnectionAux().executeQuery(sql)) {
+            if (getConnectionAux().next()) {
+                if (!"0".equals(getConnectionAux().getString("Propuesta5"))) {
+                    propuestaActual = getConnectionAux().getString("Propuesta5");
+                } else if (!"0".equals(getConnectionAux().getString("Propuesta4"))) {
+                    propuestaActual = getConnectionAux().getString("Propuesta4");
+                } else if (!"0".equals(getConnectionAux().getString("Propuesta3"))) {
+                    propuestaActual = getConnectionAux().getString("Propuesta3");
+                } else if (!"0".equals(getConnectionAux().getString("Propuesta2"))) {
+                    propuestaActual = getConnectionAux().getString("Propuesta2");
+                } else if (!"0".equals(getConnectionAux().getString("Propuesta1"))) {
+                    propuestaActual = getConnectionAux().getString("Propuesta1");
+                }
+            } 
+
+    }
+ 
+    return propuestaActual;
+}
+   
 
     private String getIdSeguimientoSeminuevos(String idValuacion) {
         String idSeminuevos = "";
