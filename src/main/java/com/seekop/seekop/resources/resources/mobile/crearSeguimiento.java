@@ -32,6 +32,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
     private String idProducto = "";
     private String modelo = "";
     private String observaciones = "";
+    private String vin = "";
 
     public crearSeguimiento(String contenido, String ip) {
         recibidoJSON = contenido;
@@ -48,6 +49,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                 this.modelo = validarvacio(objetoJson.getString("modelo"), "");
                 this.idProducto = validarvacio(objetoJson.getString("IdProducto"), "");
                 this.observaciones = objetoJson.getString("Observaciones");
+                this.vin = validarvacio(objetoJson.getString("Vin"), "");
             } catch (JSONException ex) {
                 setErrorMensaje("JSON malformed: " + ex.toString());
             }
@@ -218,7 +220,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                                     + "`HrInicio`, `HrFin`, `Folio`, `IdAuto`, \n"
                                     + "`IdProducto`, `Url_Licencia`) \n"
                                     + "VALUES \n"
-                                    + "('', '" + fecha + "', '" + getIdProspecto() + "', '" + auxIdPropietario + "', \n"
+                                    + "('" + vin + "', '" + fecha + "', '" + getIdProspecto() + "', '" + auxIdPropietario + "', \n"
                                     + "'" + idTipodeventa + "', '" + idTipoDeCompra + "', '" + idTipodecierre + "', '" + idFuente + "', \n"
                                     + "'" + idSubcampana + "', '" + idStatus + "', '" + idSeguimiento + "', '', \n"
                                     + "'', '0.00000000', '0.00000000', '', \n"
