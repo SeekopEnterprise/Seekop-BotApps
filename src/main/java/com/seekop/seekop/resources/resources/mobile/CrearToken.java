@@ -1,6 +1,5 @@
 package com.seekop.seekop.resources.resources.mobile;
 
-import com.aire.common.utilities.database.ConnectionManager;
 import java.io.UnsupportedEncodingException;
 import resources.CommonSeekopUtilities;
 import java.text.SimpleDateFormat;

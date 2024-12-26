@@ -72,8 +72,9 @@ public class ProcessToken extends CommonSeekopUtilities {
                 + "    \"IdEjecutivo\": \""+getIdEjecutivo()+"\",\n"
                 + "    \"NombreEjecutivo\": \""+getNombreCompletoEjecutivo()+"\",\n"
                 + "    \"IdProspecto\": \""+getIdProspecto()+"\",\n"
-                + "    \"NombreMarca\": \""+getDbMarca()+"\",\n"
-                 + "    \"Registro\": \""+getRegistro()+"\"\n"
+                + "    \"NombreMarca\": \""+getDbMarca()+"\",\n" 
+                + "    \"Registro\": \""+getRegistro()+"\",\n"
+                + "    \"PoolName\": \""+getPoolDeConexion()+"\"\n"
                 + "}";
     }
     
