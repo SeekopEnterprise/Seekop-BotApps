@@ -218,6 +218,7 @@ public class crearValuacion3 extends CommonSeekopUtilities {
         table.setValue("PrecioPropuestoCliente", "0");
         table.setValue("TipoValuacion", "0");
         table.setValue("FechaValuacion", FechaValuacion);
+        table.setValue("MetodoReloj", "1");
 //        if (!metodoReloj.equals("")) {
 //            table.setValue("MetodoReloj", metodoReloj);
 //        }
