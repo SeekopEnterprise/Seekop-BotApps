@@ -771,16 +771,14 @@ public class CommonSeekopUtilities {
     }
     
     public String getNombreSeminuevos(String idDistribuidor) {
+        String idSeminuevos = getIdSeminuevos(idDistribuidor);
         String nombre = "";
         String sql = "SELECT \n"
-                + "IdDistribuidorSemiNuevos, Nombre\n"
+                + "Nombre\n"
                 + "FROM\n"
-                + getDbGrupoCorporativo() + ".distribuidores,\n"
-                + getDbGrupoCorporativo() + ".distribuidoresnuevosseminuevos\n"
+                + getDbGrupoCorporativo() + ".basesdedatos\n"
                 + "WHERE\n"
-                + "IdDistribuidorNuevo = '" + idDistribuidor + "'\n"
-                + " AND IdDistribuidor = IdDistribuidorSemiNuevos\n"
-                + " ORDER BY Nombre;";
+                + "IdBaseDeDatos = '" + idSeminuevos + "'";
         if (getConnectionDistribuidor().executeQuery(sql)) {
             if (getConnectionDistribuidor().next()) {
                 nombre = getConnectionDistribuidor().getString("Nombre");
