@@ -323,26 +323,6 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
         return idSeguimiento;
     }
 
-    private String getIdSeminuevos(String idDistribuidor) {
-        String idSeminuevos = "";
-        String sql = "SELECT \n"
-                + "IdDistribuidorSemiNuevos, Nombre\n"
-                + "FROM\n"
-                + getDbGrupoCorporativo() + ".distribuidores,\n"
-                + getDbGrupoCorporativo() + ".distribuidoresnuevosseminuevos\n"
-                + "WHERE\n"
-                + "IdDistribuidorNuevo = '" + idDistribuidor + "'\n"
-                + " AND IdDistribuidor = IdDistribuidorSemiNuevos\n"
-                + " ORDER BY Nombre;";
-        if (getConnectionDistribuidor().executeQuery(sql)) {
-            if (getConnectionDistribuidor().next()) {
-                idSeminuevos = getConnectionDistribuidor().getString("IdDistribuidorSemiNuevos");
-                abrirConnection(idDistribuidor);
-            }
-        }
-        return idSeminuevos;
-    }
-
     private String generaJSONRespuesta() {
         String respuesta = "";
         switch (getStatus()) {

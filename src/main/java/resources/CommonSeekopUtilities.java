@@ -750,5 +750,42 @@ public class CommonSeekopUtilities {
         }
         return nombreCompleto;
     }
-
+    
+    public String getIdSeminuevos(String idDistribuidor) {
+        String idSeminuevos = "";
+        String sql = "SELECT \n"
+                + "IdDistribuidorSemiNuevos, Nombre\n"
+                + "FROM\n"
+                + getDbGrupoCorporativo() + ".distribuidores,\n"
+                + getDbGrupoCorporativo() + ".distribuidoresnuevosseminuevos\n"
+                + "WHERE\n"
+                + "IdDistribuidorNuevo = '" + idDistribuidor + "'\n"
+                + " AND IdDistribuidor = IdDistribuidorSemiNuevos\n"
+                + " ORDER BY Nombre;";
+        if (getConnectionDistribuidor().executeQuery(sql)) {
+            if (getConnectionDistribuidor().next()) {
+                idSeminuevos = getConnectionDistribuidor().getString("IdDistribuidorSemiNuevos");
+            }
+        }
+        return idSeminuevos;
+    }
+    
+    public String getNombreSeminuevos(String idDistribuidor) {
+        String nombre = "";
+        String sql = "SELECT \n"
+                + "IdDistribuidorSemiNuevos, Nombre\n"
+                + "FROM\n"
+                + getDbGrupoCorporativo() + ".distribuidores,\n"
+                + getDbGrupoCorporativo() + ".distribuidoresnuevosseminuevos\n"
+                + "WHERE\n"
+                + "IdDistribuidorNuevo = '" + idDistribuidor + "'\n"
+                + " AND IdDistribuidor = IdDistribuidorSemiNuevos\n"
+                + " ORDER BY Nombre;";
+        if (getConnectionDistribuidor().executeQuery(sql)) {
+            if (getConnectionDistribuidor().next()) {
+                nombre = getConnectionDistribuidor().getString("Nombre");
+            }
+        }
+        return nombre;
+    }
 }
