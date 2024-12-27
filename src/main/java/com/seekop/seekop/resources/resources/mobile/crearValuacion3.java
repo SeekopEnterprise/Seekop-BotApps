@@ -373,23 +373,4 @@ public class crearValuacion3 extends CommonSeekopUtilities {
 
         return fecha;
     }
-
-    private String getIdSeminuevos(String idDistribuidor) {
-        String idSeminuevos = "";
-        String sql = "SELECT \n"
-                + "IdDistribuidorSemiNuevos, Nombre\n"
-                + "FROM\n"
-                + getDbGrupoCorporativo() + ".distribuidores,\n"
-                + getDbGrupoCorporativo() + ".distribuidoresnuevosseminuevos\n"
-                + "WHERE\n"
-                + "IdDistribuidorNuevo = '" + idDistribuidor + "'\n"
-                + " AND IdDistribuidor = IdDistribuidorSemiNuevos\n"
-                + " ORDER BY Nombre;";
-        if (getConnectionDistribuidor().executeQuery(sql)) {
-            if (getConnectionDistribuidor().next()) {
-                idSeminuevos = getConnectionDistribuidor().getString("IdDistribuidorSemiNuevos");
-            }
-        }
-        return idSeminuevos;
-    }
 }

@@ -26,6 +26,7 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
     private String jsonMandado = "";
     private String jsonBody = "[]";
     //////
+    private String idValuacion = "";
 
     public cancelarSeguimiento(String recibidoJSON, String ip) {
         jsonMandado=recibidoJSON;
@@ -37,6 +38,7 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
             this.ip = ip;
             this.token = objetoJson.getString("TOKEN");
             this.idSeguimiento = objetoJson.getString("IDSEGUIMIENTO");
+            this.idValuacion = objetoJson.getString("IDVALUACION");
         } catch (JSONException ex) {
             setErrorMensaje("JSON malformed: " + ex.toString());
         }
@@ -59,6 +61,14 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
     }
 
     private void conection() {
+        
+        String distribuidor = getDbDistribuidor();
+        if(!idValuacion.isEmpty())
+        {
+            distribuidor = getNombreSeminuevos(getIdDistribuidor());
+            AbrirConnectionSeminuevos();
+        }
+        
         int contadorReprogramaciones = 0;
         String sql = "SELECT \n"
                 + "    s.IdSeguimiento,\n"
@@ -74,9 +84,9 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                 + "    ta.Nombre AS nombreTipoAD,\n"
                 + "    ta.cita\n"
                 + "FROM\n"
-                + "    " + getDbDistribuidor() + ".seguimientos s\n"
+                + "    " + distribuidor + ".seguimientos s\n"
                 + "        LEFT JOIN\n"
-                + "    " + getDbDistribuidor() + ".tipoactividaddetalle ta ON ta.IdTipoActividadDetalle = s.IdTipoActividadDetalle\n"
+                + "    " + distribuidor + ".tipoactividaddetalle ta ON ta.IdTipoActividadDetalle = s.IdTipoActividadDetalle\n"
                 + "WHERE\n"
                 + "    IdSeguimiento = '" + idSeguimiento + "';";
         if (getConnectionDistribuidor().executeQuery(sql)) {
@@ -86,7 +96,7 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                     contadorReprogramaciones++;
                     String idUso = validarvacio(getConnectionDistribuidor().getString("Uso"), "");
                     String nombreUso = getIdUso(idUso);
-                    sql = "UPDATE `" + getDbDistribuidor() + "`.`seguimientos` \n"
+                    sql = "UPDATE `" + distribuidor + "`.`seguimientos` \n"
                             + "SET \n"
                             + "    `Cumplida` = '" + getFechaHoy() + "',\n"
                             + "    `Exitosa` = 0,\n"
@@ -95,32 +105,63 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                             + "WHERE\n"
                             + "    (`IdSeguimiento` = '" + idSeguimiento + "');";
                     if (getConnectionDistribuidor().executeUpdate(sql)) {
-                        switch (nombreUso) {
-                            case "Demostración":
-                                sql = "UPDATE `" + getDbDistribuidor() + "`.`demostraciones` \n"
-                                        + "SET \n"
-                                        + "    `Status` = 3\n"
-                                        + "WHERE\n"
-                                        + "    (`IdSeguimiento` = '" + idSeguimiento + "')\n"
-                                        + "        AND (`IdProspecto` = '" + getIdProspecto() + "');";
-                                if (!getConnectionDistribuidor().executeUpdate(sql)) {
-                                    setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
-                                }
-                                break;
-                            case "Valuación":
+                        
+                        if(!idValuacion.isEmpty())
+                        {
+                            ////ACTUALIZA SEMINUEVOS
+                            sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
+                                    + "SET \n"
+                                    + "    `IdStatus` = '6'\n"
+                                    + "WHERE\n"
+                                    + "    (`IdSeguimiento` = '" + idSeguimiento + "'\n"
+                                    + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
+                            if (!getConnectionDistribuidor().executeUpdate(sql)) {
+                                setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                            }
+                            
+                            getTokenInformation(token);
+                            if (getConnectionDistribuidor() != null) {
+                                ////ACTUALIZA NUEVOS
                                 sql = "UPDATE `" + getDbDistribuidor() + "`.`valuacion` \n"
-                                        + "SET \n"
-                                        + "    `IdStatus` = '6'\n"
-                                        + "WHERE\n"
-                                        + "    (`IdSeguimiento` = '" + idSeguimiento + "'\n"
-                                        + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
-                                if (!getConnectionDistribuidor().executeUpdate(sql)) {
-                                    setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
-                                }
-                                break;
-                            default:
+                                            + "SET \n"
+                                            + "    `IdStatus` = '6'\n"
+                                            + "WHERE\n"
+                                            + "    (`IdValuacion` = '" + idValuacion + "'\n"
+                                            + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
+                               if (!getConnectionDistribuidor().execute(sql)) {
+                                   setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                               }
+                            }        
+                        }
+                        else
+                        {
+                            switch (nombreUso) {
+                                case "Demostración":
+                                    sql = "UPDATE `" + distribuidor + "`.`demostraciones` \n"
+                                            + "SET \n"
+                                            + "    `Status` = 3\n"
+                                            + "WHERE\n"
+                                            + "    (`IdSeguimiento` = '" + idSeguimiento + "')\n"
+                                            + "        AND (`IdProspecto` = '" + getIdProspecto() + "');";
+                                    if (!getConnectionDistribuidor().executeUpdate(sql)) {
+                                        setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                                    }
+                                    break;
+                                case "Valuación":
+                                    sql = "UPDATE `" + getDbDistribuidor() + "`.`valuacion` \n"
+                                            + "SET \n"
+                                            + "    `IdStatus` = '6'\n"
+                                            + "WHERE\n"
+                                            + "    (`IdSeguimiento` = '" + idSeguimiento + "'\n"
+                                            + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
+                                    if (!getConnectionDistribuidor().executeUpdate(sql)) {
+                                        setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                                    }
+                                    break;
+                                default:
 
-                                break;
+                                    break;
+                            }
                         }
                     } else {
                         setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
