@@ -92,7 +92,7 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                             + "    \"Solicitud\": \"" + getConnectionDistribuidor().getString("Solicitud") + "\",\n"
                             + "    \"Respuesta\": \"" + getConnectionDistribuidor().getString("Respuesta") + "\",\n"
                             + "    \"IdStatus\": \"" + getConnectionDistribuidor().getString("IdStatus") + "\",\n"
-                            + getInfoValuacionSeminuevos(getConnectionDistribuidor().getString("IdValuacion"), getConnectionDistribuidor().getString("IdProspecto"))
+                            + getInfoValuacionSeminuevos(getConnectionDistribuidor().getString("IdValuacion"), getConnectionDistribuidor().getString("IdProspecto"),getConnectionDistribuidor().getString("IdStatus"))
                             + "    \"IdSeguimiento\": \"" + validarvacio(auxIdSeguimiento, "") + "\"\n"
                             + "},";
                 }
@@ -108,7 +108,7 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
 
     }
 
-    private String getInfoValuacionSeminuevos(String idValuacion, String idProspecto) {
+    private String getInfoValuacionSeminuevos(String idValuacion, String idProspecto,String idStatus) {
         String campos = "";
         String valuacionLegal = " ";
         String valuacionMecanica = " ";
@@ -159,8 +159,8 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                     if (getConnectionAux().next()) {
 //                        buscarEjecutivo(getConnectionAux().getString("IdEjecutivoValuacion"));
                         campos = "    \"Valuador\": \"" + getNombreCompletoEjecutivo() + "\",\n"
-                                + "    \"PropuestaInicial\": \"" + getConnectionAux().getString("IdStatus") + "\",\n"
-                               // + "    \"PropuestaActual\": \"" + getPropuestaActual(idValuacion) + "\",\n"
+                                + "    \"PropuestaInicial\": \"" + getPropuestaInicial(idValuacion,getConnectionAux().getString("IdStatus")) + "\",\n"
+                                + "    \"PropuestaActual\": \"" + getPropuestaActual(idValuacion,getConnectionAux().getString("IdStatus")) + "\",\n"
                                 + "    \"Modelo\": \"" + getConnectionAux().getString("ModeloActual") + "\",\n"
                                 + "    \"Marca\": \"" + getConnectionAux().getString("NombreMarca") + "\",\n"
                                 + "    \"Auto\": \"" + getConnectionAux().getString("NombreAuto") + "\",\n"
@@ -248,9 +248,33 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
         return campos;
     }
     
+   private String getPropuestaInicial(String idValuacion,String idStatus) {
+        String propuestaActual = "0";
+
+        if(!idStatus.equals("0"))
+        {
+
+            String sql = "SELECT \n"
+                    + "Propuesta1\n"
+                    + "FROM\n"
+                    + getAuxdbDistribuidor() + ".valuacionprecios\n"
+                    + "WHERE\n"
+                    + "IdValuacion = '" + idValuacion + "'";
+
+            if (getConnectionAux().executeQuery(sql)) {
+                if (getConnectionAux().next()) {
+                    propuestaActual = getConnectionAux().getString("Propuesta1"); 
+                } 
+            }
+        }
+        return propuestaActual;
+    }
     
-   private String getPropuestaActual(String idValuacion) {
+   private String getPropuestaActual(String idValuacion,String idStatus) {
     String propuestaActual = "0";
+    
+    if(!idStatus.equals("0"))
+    {
     
         String sql = "SELECT \n"
                 + "Propuesta1, Propuesta2, Propuesta3, Propuesta4, Propuesta5\n"
@@ -274,6 +298,7 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                 }
             } 
 
+        }
     }
  
     return propuestaActual;
@@ -304,8 +329,7 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                         + "        LEFT JOIN\n"
                         + "    " + getAuxdbDistribuidor() + ".seguimientos s ON v.IdSeguimiento = s.IdSeguimiento\n"
                         + "WHERE\n"
-                        + "    v.IdValuacion = '" + idValuacion + "'\n"
-                        + "        AND s.cumplida = '1900-01-01 00:00:00';";
+                        + "    v.IdValuacion = '" + idValuacion + "'\n";
                 if (getConnectionAux().executeQuery(sql)) {
                     if (getConnectionAux().next()) {
                         if (idSeguimiento.equals("NI")) {
