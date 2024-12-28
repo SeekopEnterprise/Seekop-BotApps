@@ -73,23 +73,30 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                 + "        AND IdProspecto = '" + getIdProspecto() + "';";
         String idStatus = "";
         if (this.aceptada) {
-            idStatus = "12";
+            idStatus = "4";
+            String isDalton = traerValorConfiguracion("Habilitar", "EstatusInventario");
+            if(isDalton.equals("1"))
+            {
+                idStatus = "12";
+            }
         } else {
             idStatus = "11";
         }
         if (getConnectionDistribuidor().executeQuery(sql)) {
             if (getConnectionDistribuidor().next()) {
-                if (getConnectionDistribuidor().getString("IdStatus").equals("0")) {
-                    sql = "UPDATE " + getDbDistribuidor() + ".`valuacion` SET `IdStatus` = '" + idStatus + "' WHERE (`IdValuacion` = '" + idValuacion + "');";
-                    if (getConnectionDistribuidor().executeUpdate(sql)) {
+                sql = "UPDATE " + getDbDistribuidor() + ".`valuacion` SET `IdStatus` = '" + idStatus + "' WHERE (`IdValuacion` = '" + idValuacion + "');";
+                  
+                if (getConnectionDistribuidor().executeUpdate(sql)) 
+                {    
+                    String baseSeminuevos = getNombreSeminuevos(getIdDistribuidor());
+                    AbrirConnectionSeminuevos();
+                    
+                    sql = "UPDATE " + baseSeminuevos + ".`valuacion` SET `IdStatus` = '" + idStatus + "' WHERE (`IdValuacion` = '" + idValuacion + "');";
+                    getConnectionDistribuidor().executeUpdate(sql);
 
-                    } else {
-                        setErrorMensaje("Error al actualizar valuacion= '" + getConnectionDistribuidor().getErrorMessage() + "'");
-                    }
                 } else {
-                    setErrorMensaje("La valuacion con el IdValuacion '" + idValuacion + "' y el token '" + token + "' tiene ya otro estatus");
+                    setErrorMensaje("Error al actualizar valuacion= '" + getConnectionDistribuidor().getErrorMessage() + "'");
                 }
-
             } else {
                 setErrorMensaje("No se encontro valuacion con el IdValuacion '" + idValuacion + "' y el token '" + token + "'");
             }
