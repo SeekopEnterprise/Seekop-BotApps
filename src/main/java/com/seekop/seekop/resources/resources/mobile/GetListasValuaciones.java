@@ -158,14 +158,14 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                 if (getConnectionAux().executeQuery(sql)) {
                     if (getConnectionAux().next()) {
 //                        buscarEjecutivo(getConnectionAux().getString("IdEjecutivoValuacion"));
-                        campos = "    \"Valuador\": \"" + getNombreCompletoEjecutivo() + "\",\n"
-                                + "    \"PropuestaInicial\": \"" + getPropuestaInicial(idValuacion,getConnectionAux().getString("IdStatus")) + "\",\n"
-                                + "    \"PropuestaActual\": \"" + getPropuestaActual(idValuacion,getConnectionAux().getString("IdStatus")) + "\",\n"
+                        campos = "    \"Valuador\": \"" + getNombreCompletoEjecutivo() + "\",\n" 
                                 + "    \"Modelo\": \"" + getConnectionAux().getString("ModeloActual") + "\",\n"
                                 + "    \"Marca\": \"" + getConnectionAux().getString("NombreMarca") + "\",\n"
                                 + "    \"Auto\": \"" + getConnectionAux().getString("NombreAuto") + "\",\n"
                                 + "    \"Versión\": \"" + getConnectionAux().getString("NombreProducto") + "\",\n"
-                                + "    \"Kilometraje\": \"" + getConnectionAux().getString("Kilometraje") + "\",\n";
+                                + "    \"Kilometraje\": \"" + getConnectionAux().getString("Kilometraje") + "\",\n"
+                                + "    \"PropuestaInicial\": \"" + getPropuestaInicial(idValuacion,getConnectionAux().getString("IdStatus")) + "\",\n"
+                                + "    \"PropuestaActual\": \"" + getPropuestaActual(idValuacion,getConnectionAux().getString("IdStatus")) + "\",\n";
                         sql = "SELECT \n"
                                 + "    vd.IdValuacion,\n"
                                 + "    vd.IdSubcategoria,\n"
