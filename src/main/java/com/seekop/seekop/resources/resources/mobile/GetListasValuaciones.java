@@ -237,7 +237,11 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                                             + "\"Penalizacion\": \"" + validarvacio(getConnectionAux().getString("Penalizacion"), "") + "\"},";
                                 }
                             }
-                            valuacionLegal.substring(0, valuacionLegal.length() - 1);
+
+                            if(!valuacionLegal.isEmpty())
+                            {
+                                 valuacionLegal = valuacionLegal.substring(0, valuacionLegal.length() - 1); 
+                            }
                             valuacionLegal = "\"Legal\": [" + valuacionLegal + "],";
                         }
                         campos = campos + valuacionMecanica + valuacionLegal;
