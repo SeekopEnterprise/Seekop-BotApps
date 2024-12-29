@@ -786,4 +786,20 @@ public class CommonSeekopUtilities {
         }
         return nombre;
     }
+    
+    public String buscarValuador(String idEjecutivo) {
+        String valuador = "";
+        String sql = "SELECT \n"
+                + "    IdEjecutivo, Nombre, Paterno, Materno, Genero\n"
+                + "FROM\n"
+                + "    " + getAuxdbDistribuidor() + ".ejecutivos\n"
+                + "WHERE\n"
+                + "    IdEjecutivo = '" + idEjecutivo + "';";
+        if (getConnectionAux().executeQuery(sql)) {
+            if (getConnectionAux().next()) {
+                valuador = validarvacio(getConnectionAux().getString("Nombre"), "") + " " + validarvacio(getConnectionAux().getString("Paterno"), "") + " " + validarvacio(getConnectionAux().getString("Materno"), "");
+            }
+        }
+        return valuador;
+    }
 }
