@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import org.json.JSONException;
 import org.json.JSONObject;
+import resources.ConnectionManager;
 
 /**
  *
@@ -44,6 +45,7 @@ public class GetListasColores extends CommonSeekopUtilities {
                 this.idProducto = validarvacio(objetoJson.getString("IDPRODUCTO"), "");
                 this.tipo = objetoJson.getString("TIPO");
                 this.tipo = validarvacio(this.tipo, "N");
+                this.idMarca = objetoJson.getString("IDMARCA");
             } catch (JSONException ex) {
                 setErrorMensaje("JSON malformed: " + ex.toString());
             }
@@ -97,22 +99,39 @@ public class GetListasColores extends CommonSeekopUtilities {
                     + "FROM\n"
                     + "    sicopdbseminuevos.Colores\n"
                     + "WHERE\n"
-                    + "    (IdMarca = 'M28'\n"
+                    + "    (IdMarca = '"+ idMarca +"'\n"
                     + "        OR IdColor = '0000000000')\n"
                     + "        AND Activo = 1\n"
                     + "        AND Interior = 0\n"
                     + "ORDER BY Nombre;";
+
+            ConnectionManager connectionSeminuevos = abrirConnection(getIdDistribuidor());
+            if (connectionSeminuevos.executeQuery(sql)) {
+                while (connectionSeminuevos.next()) {
+                    if (!validarvacio(connectionSeminuevos.getString("nombreColor"), "").equals("")) {
+                        jsonBody += "\n{\n"
+                                + "    \"IdColor\": \"" + connectionSeminuevos.getString("IdColor") + "\",\n"
+                                + "    \"nombreColor\": \"" + validarvacio(connectionSeminuevos.getString("nombreColor"), "").replace("\"", "") + "\"\n"
+                                + "},";
+                    }
+                }
+            }
+            
         }
-        if (getConnectionDistribuidor().executeQuery(sql)) {
-            while (getConnectionDistribuidor().next()) {
-                if (!validarvacio(getConnectionDistribuidor().getString("nombreColor"), "").equals("")) {
-                    jsonBody += "\n{\n"
-                            + "    \"IdColor\": \"" + getConnectionDistribuidor().getString("IdColor") + "\",\n"
-                            + "    \"nombreColor\": \"" + validarvacio(getConnectionDistribuidor().getString("nombreColor"), "").replace("\"", "") + "\"\n"
-                            + "},";
+        else
+        {
+            if (getConnectionDistribuidor().executeQuery(sql)) {
+                while (getConnectionDistribuidor().next()) {
+                    if (!validarvacio(getConnectionDistribuidor().getString("nombreColor"), "").equals("")) {
+                        jsonBody += "\n{\n"
+                                + "    \"IdColor\": \"" + getConnectionDistribuidor().getString("IdColor") + "\",\n"
+                                + "    \"nombreColor\": \"" + validarvacio(getConnectionDistribuidor().getString("nombreColor"), "").replace("\"", "") + "\"\n"
+                                + "},";
+                    }
                 }
             }
         }
+        
         jsonBody = jsonBody.substring(0, jsonBody.length() - 1);
 
     }
