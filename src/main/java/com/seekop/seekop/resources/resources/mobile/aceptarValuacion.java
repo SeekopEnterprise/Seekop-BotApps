@@ -73,12 +73,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                 + "        AND IdProspecto = '" + getIdProspecto() + "';";
         String idStatus = "";
         if (this.aceptada) {
-            idStatus = "4";
-            String isDalton = traerValorConfiguracion("Habilitar", "EstatusInventario");
-            if(isDalton.equals("1"))
-            {
-                idStatus = "12";
-            }
+            idStatus = "12";
         } else {
             idStatus = "11";
         }

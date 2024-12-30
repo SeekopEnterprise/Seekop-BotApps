@@ -200,6 +200,7 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                                             && !validarvacio(getConnectionAux().getString("NombreSubCategoria"), getConnectionAux().getString("NombreSubCategoria2")).equals("")) {
                                         valuacionMecanica += "{\"Categoria\": \"" + validarvacio(getConnectionAux().getString("NombreCategoria"), getConnectionAux().getString("NombreCategoria2")) + "\","
                                                 + "\"Subcategoria\": \"" + validarvacio(getConnectionAux().getString("NombreSubCategoria"), getConnectionAux().getString("NombreSubCategoria2")) + "\","
+                                                + "\"Observaciones\": \"" + validarvacio(getConnectionAux().getString("Observaciones"), "") + "\","
                                                 + "\"Penalizacion\": \"" + validarvacio(getConnectionAux().getString("ValorPenalizacion"), "0.00") + "\","
                                                 + "\"Bonificacion\": \"" + validarvacio(getConnectionAux().getString("ValorBonificacion"), "0.00") + "\"},";
                                     }
@@ -234,6 +235,7 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                             while (getConnectionAux().next()) {
                                 if (!validarvacio(getConnectionAux().getString("Penalizacion"), "0.000").equals("0.000")) {
                                     valuacionLegal += "{\"Categoria\": \"" + validarvacio(getConnectionAux().getString("Titulo"), "") + "\","
+                                            + "\"Observaciones\": \"" + validarvacio(getConnectionAux().getString("Observaciones"), "") + "\","
                                             + "\"Penalizacion\": \"" + validarvacio(getConnectionAux().getString("Penalizacion"), "") + "\"},";
                                 }
                             }
