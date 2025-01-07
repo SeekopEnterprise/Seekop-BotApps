@@ -81,7 +81,7 @@ public class FormatManager
         try {
             SimpleDateFormat parser = new SimpleDateFormat("HH:mm");
             date = parser.parse(compareTime);
-        } catch (Exception e) {
+        } catch (ParseException e) {
             registerError("timeOccursBetween", e);
         }
         return timeOccursBetween(beginTime, endTime, date);
@@ -95,7 +95,7 @@ public class FormatManager
             if ((date.compareTo(begin) == 0) || ((date.after(begin)) && (date.before(end)))) {
                 return true;
             }
-        } catch (Exception e) {
+        } catch (ParseException e) {
             registerError("timeOccursBetween", e);
         }
         return false;

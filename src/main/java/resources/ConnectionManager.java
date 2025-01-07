@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import javax.naming.Context;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 public class ConnectionManager
@@ -54,7 +55,7 @@ public class ConnectionManager
                 this.connection = datasource.getConnection();
                 this.connection.setAutoCommit(true);
             }
-        } catch (Exception e) {
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | SQLException | NamingException e) {
             registerError("ConnectionManager(String poolName)", e);
         }
     }
@@ -64,7 +65,7 @@ public class ConnectionManager
             Class.forName(driver).newInstance();
             this.connection = DriverManager.getConnection(URL, user, password);
             this.connection.setAutoCommit(true);
-        } catch (Exception e) {
+        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | SQLException e) {
             registerError("ConnectionManager(String URL, String user, String password)", e);
         }
     }
@@ -83,7 +84,7 @@ public class ConnectionManager
             }
             this.resultSet = this.statement.executeQuery(sql);
             b = true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("executeQuery", e);
             registerIntoLog("sentence", sql);
         }
@@ -104,7 +105,7 @@ public class ConnectionManager
             }
             this.statement.execute(upperCase ? sql.toUpperCase() : sql);
             b = true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("execute", e);
             registerIntoLog("sentence", sql);
         }
@@ -125,7 +126,7 @@ public class ConnectionManager
             }
             this.statement.executeUpdate(upperCase ? sql.toUpperCase() : sql);
             b = true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("execute", e);
             registerIntoLog("sentence", sql);
         }
@@ -149,12 +150,12 @@ public class ConnectionManager
             if (this.timeout > 0) {
                 this.statement.setQueryTimeout(this.timeout);
             }
-            for (int q = 0; q < queries.length; q++) {
-                this.statement.addBatch(upperCase ? queries[q].toUpperCase() : queries[q]);
+            for (String querie : queries) {
+                this.statement.addBatch(upperCase ? querie.toUpperCase() : querie);
             }
             this.statement.executeBatch();
             b = true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("execute", e);
             registerIntoLog("sentence", sql);
         }
@@ -189,7 +190,7 @@ public class ConnectionManager
                 this.connection.close();
             }
             b = true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("close", e);
         }
         return b;
@@ -199,7 +200,7 @@ public class ConnectionManager
         boolean b = false;
         try {
             b = this.resultSet.next();
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("next", e);
         }
         return b;
@@ -208,7 +209,7 @@ public class ConnectionManager
     public boolean wasNull() {
         try {
             return this.resultSet.wasNull();
-        } catch (Exception localException) {
+        } catch (SQLException localException) {
         }
         return true;
     }
@@ -217,7 +218,7 @@ public class ConnectionManager
         boolean b = false;
         try {
             return this.resultSet.getBoolean(index);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getBoolean(" + index + ")", e);
         }
         return b;
@@ -227,7 +228,7 @@ public class ConnectionManager
         boolean b = false;
         try {
             return this.resultSet.getBoolean(name);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getBoolean(" + name + ")", e);
         }
         return b;
@@ -236,7 +237,7 @@ public class ConnectionManager
     public Date getDate(int index) {
         try {
             return this.resultSet.getDate(index);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getDate(" + index + ")", e);
         }
         return Date.valueOf("1900-01-01");
@@ -245,7 +246,7 @@ public class ConnectionManager
     public Date getDate(String name) {
         try {
             return this.resultSet.getDate(name);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getDate(" + name + ")", e);
         }
         return Date.valueOf("1900-01-01");
@@ -290,7 +291,7 @@ public class ConnectionManager
     public double getDouble(int index) {
         try {
             return this.resultSet.getDouble(index);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getDouble(" + index + ")", e);
         }
         return 0.0D;
@@ -299,7 +300,7 @@ public class ConnectionManager
     public double getDouble(String name) {
         try {
             return this.resultSet.getDouble(name);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getDouble(" + name + ")", e);
         }
         return 0.0D;
@@ -308,7 +309,7 @@ public class ConnectionManager
     public int getInt(int index) {
         try {
             return this.resultSet.getInt(index);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getInt(" + index + ")", e);
         }
         return 0;
@@ -317,7 +318,7 @@ public class ConnectionManager
     public int getInt(String name) {
         try {
             return this.resultSet.getInt(name);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getInt(" + name + ")", e);
         }
         return 0;
@@ -326,7 +327,7 @@ public class ConnectionManager
     public long getLong(int index) {
         try {
             return this.resultSet.getLong(index);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getLong(" + index + ")", e);
         }
         return 0L;
@@ -335,7 +336,7 @@ public class ConnectionManager
     public long getLong(String name) {
         try {
             return this.resultSet.getLong(name);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getLong(" + name + ")", e);
         }
         return 0L;
@@ -344,7 +345,7 @@ public class ConnectionManager
     public String getString(int index) {
         try {
             return this.resultSet.getString(index);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getString(" + index + ")", e);
         }
         return "";
@@ -353,7 +354,7 @@ public class ConnectionManager
     public String getString(String name) {
         try {
             return this.resultSet.getString(name);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getString(" + name + ")", e);
         }
         return "";
@@ -362,7 +363,7 @@ public class ConnectionManager
     public Time getTime(int index) {
         try {
             return this.resultSet.getTime(index);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getTime(" + index + ")", e);
         }
         return Time.valueOf("00:00:00");
@@ -371,7 +372,7 @@ public class ConnectionManager
     public Time getTime(String name) {
         try {
             return this.resultSet.getTime(name);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getTime(" + name + ")", e);
         }
         return Time.valueOf("00:00:00");
@@ -380,7 +381,7 @@ public class ConnectionManager
     public Timestamp getTimestamp(int index) {
         try {
             return this.resultSet.getTimestamp(index);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getTimestamp(" + index + ")", e);
         }
         return Timestamp.valueOf("1900-00-00 00:00:00");
@@ -389,7 +390,7 @@ public class ConnectionManager
     public Timestamp getTimestamp(String name) {
         try {
             return this.resultSet.getTimestamp(name);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getTimestamp(" + name + ")", e);
         }
         return Timestamp.valueOf("1900-00-00 00:00:00");
@@ -400,7 +401,7 @@ public class ConnectionManager
         try {
             this.connection.setAutoCommit(false);
             b = true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("beginTransaction", e);
         }
         return b;
@@ -409,7 +410,7 @@ public class ConnectionManager
     public int getYear(int index) {
         try {
             return Integer.parseInt(this.resultSet.getString(index).substring(0, 4));
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getYear(" + index + ")", e);
         }
         return 0;
@@ -418,7 +419,7 @@ public class ConnectionManager
     public int getYear(String name) {
         try {
             return Integer.parseInt(this.resultSet.getString(name).substring(0, 4));
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getYear(" + name + ")", e);
         }
         return 0;
@@ -427,7 +428,7 @@ public class ConnectionManager
     public int getMonth(int index) {
         try {
             return Integer.parseInt(this.resultSet.getString(index).substring(5, 5));
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getMonth(" + index + ")", e);
         }
         return 0;
@@ -436,7 +437,7 @@ public class ConnectionManager
     public int getMonth(String name) {
         try {
             return Integer.parseInt(this.resultSet.getString(name).substring(5, 7));
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getMonth(" + name + ")", e);
         }
         return 0;
@@ -445,7 +446,7 @@ public class ConnectionManager
     public int getDay(int index) {
         try {
             return Integer.parseInt(this.resultSet.getString(index).substring(8, 10));
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getDay(" + index + ")", e);
         }
         return 0;
@@ -454,7 +455,7 @@ public class ConnectionManager
     public int getDay(String name) {
         try {
             return Integer.parseInt(this.resultSet.getString(name).substring(8, 10));
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("getDay(" + name + ")", e);
         }
         return 0;
@@ -465,7 +466,7 @@ public class ConnectionManager
         try {
             this.connection.commit();
             b = true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("commit", e);
         }
         return b;
@@ -476,10 +477,29 @@ public class ConnectionManager
         try {
             this.connection.rollback();
             b = true;
-        } catch (Exception e) {
+        } catch (SQLException e) {
             registerError("rollback", e);
         }
         return b;
+    }
+    
+     public static String getBDCPoolName() {
+        return "sicopbdc";
+    }
+
+    public static String getBDCDatabaseName() {
+        return "sicopbdc";
+    }
+
+    public static DataSource getDatasource(String poolName) {
+        DataSource datasource = null;
+        try {
+            Context jdbc = (Context) new InitialContext().lookup("java:/jdbc/");
+            datasource = (DataSource) jdbc.lookup(poolName);
+        } catch (NamingException e) {
+
+        }
+        return datasource;
     }
 
 }

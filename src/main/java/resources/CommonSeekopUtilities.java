@@ -1,14 +1,28 @@
 package resources;
 
+import com.google.gson.Gson;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import resources.ConnectionManager;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import javax.sql.DataSource;
 
 public class CommonSeekopUtilities {
 
@@ -17,14 +31,14 @@ public class CommonSeekopUtilities {
     private String user = "";
     private String password = "";
     private String servidor = "";
-    private String dbDistribuidor = "";
-    private String dbMarca = "";
+    private static String dbDistribuidor = "";
+    private static String dbMarca = "";
     private String dbGrupoCorporativo = "";
     private String idDistribuidor = "";
     private String idMarca = "";
     private String idGrupoCorporativo = "";
     private String nombreDistribuidor = "";
-    private String PoolDeConexion = "";
+    private static String PoolDeConexion = "";
     private String emalEjecutivo = "";
     private String idPais = "";
     ConnectionManager connectionATI = null;
@@ -39,10 +53,10 @@ public class CommonSeekopUtilities {
     private String ladaDistribuidor = "";
     private String telefonosDistribuidor = "";
 
-    private String json = "";
+    private final String json = "";
     private String mensaje = "";
     private int status = 1;
-    private String fechaHoy = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar.getInstance().getTime());
+    private final String fechaHoy = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar.getInstance().getTime());
     String puertoAti = "3306";
     String userAti = "root";
     String passwordAti = "MAX.42C.MM6";
@@ -66,6 +80,13 @@ public class CommonSeekopUtilities {
     private String generoEjecutivo = "";
     private String idProspecto = "";
     private String registro = "";
+
+    public enum SearchType {
+        BRAND,
+        DEALER,
+        BDC,
+        ORIGINAL
+    }
 
     public void getTokenInformation(String token) {
         String sql = "SELECT TOKEN, IDDISTRIBUIDOR, IDUSUARIO, ID, REGISTRO FROM sicopbdc.tokens WHERE TOKEN='" + token + "';";
@@ -122,11 +143,11 @@ public class CommonSeekopUtilities {
                 idSeminuevos = connectionAux.getString("IdDistribuidorSemiNuevos");
                 abrirConnectionDistribuidor(idSeminuevos);
             } else {
-                if (connectionAux!=null) {
+                if (connectionAux != null) {
                     connectionAux.close();
                 }
-                connectionAux=new ConnectionManager("com.mysql.jdbc.Driver", "jdbc:mysql://" + servidorAti + ":" + puertoAti + "/sicopbdc", userAti, passwordAti);
-       
+                connectionAux = new ConnectionManager("com.mysql.jdbc.Driver", "jdbc:mysql://" + servidorAti + ":" + puertoAti + "/sicopbdc", userAti, passwordAti);
+
                 sql = "SELECT \n"
                         + "    d2.iddistribuidor\n"
                         + "FROM\n"
@@ -142,7 +163,7 @@ public class CommonSeekopUtilities {
                 if (connectionAux.executeQuery(sql)) {
                     while (connectionAux.next()) {
                         abrirConnectionDistribuidor(connectionAux.getString("iddistribuidor"));
-                        if (getConnectionDistribuidor()!=null) {
+                        if (getConnectionDistribuidor() != null) {
                             break;
                         }
                     }
@@ -161,7 +182,7 @@ public class CommonSeekopUtilities {
     }
 
     public ConnectionManager abrirConnectionDistribuidor(String idDistribuidor) {
-        connectionDistribuidor=null;
+        connectionDistribuidor = null;
         cleanErrorMensaje();
         boolean statusAti = false;
         String sql = "SELECT a.Nombre As Servidor, a.PoolDeConexion, a.Puerto, a.User, a.Password, b.Nombre As BaseDeDatos, b.IdBaseDeDatos AS IdBaseDeDatos, "
@@ -186,7 +207,7 @@ public class CommonSeekopUtilities {
                 this.idPais = connectionATI.getString("IdPais");
                 connectionDistribuidor = new ConnectionManager("com.mysql.jdbc.Driver", "jdbc:mysql://" + this.servidor + ":" + this.puerto + "/sicopdb", this.user, this.password);
                 statusAti = true;
-                PoolDeConexion = connectionATI.getString("PoolDeConexion");
+                this.PoolDeConexion = connectionATI.getString("PoolDeConexion");
                 if (PoolDeConexion.equals("HERACLESSERVER3306")) {
                     seminuevos = true;
                 }
@@ -332,7 +353,7 @@ public class CommonSeekopUtilities {
     }
 
     public void setConnectionAux(ConnectionManager connectionAux) {
-        if ( this.connectionAux!=null) {
+        if (this.connectionAux != null) {
             this.connectionAux.close();
         }
         this.connectionAux = connectionAux;
@@ -417,9 +438,10 @@ public class CommonSeekopUtilities {
             status = 0;
         }
     }
+
     public void cleanErrorMensaje() {
-            this.mensaje = "";
-            status = 1;
+        this.mensaje = "";
+        status = 1;
     }
 
     public String fechaFormato(String fecha, String formatoInicio, String formatoFin) {
@@ -750,7 +772,7 @@ public class CommonSeekopUtilities {
         }
         return nombreCompleto;
     }
-    
+
     public String getIdSeminuevos(String idDistribuidor) {
         String idSeminuevos = "";
         String sql = "SELECT \n"
@@ -769,7 +791,7 @@ public class CommonSeekopUtilities {
         }
         return idSeminuevos;
     }
-    
+
     public String getNombreSeminuevos(String idDistribuidor) {
         String idSeminuevos = getIdSeminuevos(idDistribuidor);
         String nombre = "";
@@ -786,7 +808,7 @@ public class CommonSeekopUtilities {
         }
         return nombre;
     }
-    
+
     public String buscarValuador(String idEjecutivo) {
         String valuador = "";
         String sql = "SELECT \n"
@@ -801,5 +823,253 @@ public class CommonSeekopUtilities {
             }
         }
         return valuador;
+    }
+
+    public static String getParametroDeSistema(String process, String variable, SearchType searchType, boolean searchByProcess) {
+        String result = "";
+
+        if (searchType == SearchType.ORIGINAL) {
+            result = getParametroDeSistema(process, variable, SearchType.DEALER, searchByProcess);
+
+            if (result == null || result.isEmpty()) {
+                result = getParametroDeSistema(process, variable, SearchType.BRAND, searchByProcess);
+            }
+
+            if (result == null || result.isEmpty()) {
+                result = getParametroDeSistema(process, variable, SearchType.BDC, searchByProcess);
+            }
+
+            return result;
+        }
+
+        DataSource datasource = null;
+        StringBuilder builder = new StringBuilder();
+        builder.append("Select Valor From ");
+
+        if (null != searchType) {
+            switch (searchType) {
+                case BRAND:
+                    builder.append(dbMarca).append(" ");
+                    datasource = ConnectionManager.getDatasource(PoolDeConexion);
+                    break;
+                case DEALER:
+                    builder.append(dbDistribuidor).append(" ");
+                    datasource = ConnectionManager.getDatasource(PoolDeConexion);
+                    break;
+                case BDC:
+                    builder.append(ConnectionManager.getBDCDatabaseName()).append(" ");
+                    datasource = ConnectionManager.getDatasource(ConnectionManager.getBDCPoolName());
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        builder.append(".Configuracion Where ");
+
+        if (searchByProcess && variable != null) {
+            builder.append("Proceso = ? AND Variable = ? ");
+        } else if (searchByProcess) {
+            builder.append("Proceso = ? ");
+        } else {
+            builder.append("Variable = ? ");
+        }
+
+        assert datasource != null;
+
+        try (Connection connection = datasource.getConnection(); PreparedStatement statement = connection.prepareStatement(builder.toString())) {
+
+            if (searchByProcess && variable != null) {
+                statement.setString(1, process);
+                statement.setString(2, variable);
+            } else if (searchByProcess) {
+                statement.setString(1, process);
+            } else {
+                statement.setString(1, variable);
+            }
+
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    result = rs.getString("Valor");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return result;
+    }
+
+    protected void sendDispositionRealTime(String idActivity, String idDealer, String idProspect, Map<String, Object> parameters) {
+        if ("1".equals(getParametroDeSistema("Habilitar", "DispositionsRealTime", SearchType.ORIGINAL, true))) {
+            try {
+
+                String urlDispositions = getParametroDeSistema("Dispositions", "urlDispositions", SearchType.ORIGINAL, true);
+
+                if (urlDispositions.isEmpty()) {
+                    urlDispositions = "https://qa.sicopweb.com/Api/Bot/sendDisposition";
+                }
+
+                URL url = new URL(urlDispositions);
+
+                LocalDateTime date = LocalDateTime.now();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String dateFormatter = date.format(formatter);
+
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json; utf-8");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setDoOutput(true);
+
+                Map<String, Object> bodyMap = new HashMap<>();
+                bodyMap.put("disposition", idActivity);
+                bodyMap.put("idDistribuidor", idDealer);
+                bodyMap.put("idProspecto", idProspect);
+                bodyMap.put("origen", "BOT-CLIENTE");
+                bodyMap.put("atencion_inicial", "BOT-IA");
+                bodyMap.put("generado_por", "CLIENTE");
+
+                if (parameters == null || !parameters.containsKey("fecha")) {
+                    bodyMap.put("fecha", dateFormatter); // formato: 2024-08-28 12:00:00
+                }
+
+                if (parameters != null) {
+                    bodyMap.putAll(parameters);
+                }
+
+                Gson gson = new Gson();
+                String json = gson.toJson(bodyMap);
+
+                try (OutputStream os = conn.getOutputStream()) {
+                    byte[] input = json.getBytes("UTF-8");
+                    os.write(input, 0, input.length);
+                    os.close();
+                }
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                        String inputLine;
+                        StringBuilder response = new StringBuilder();
+                        while ((inputLine = in.readLine()) != null) {
+                            response.append(inputLine);
+                        }
+                        //NOTE: DEJAR POR SI NECESITO DEBUGEAR
+                        /*try {
+                        Map<String, Object> responseMap = gson.fromJson(response.toString(), Map.class);
+                        System.out.println("Respuesta: " + responseMap);
+                        } catch (Exception e) {
+                        e.printStackTrace();
+                        }*/
+                    }
+                }
+                //NOTE:DEJAR POR SI NECESITO DEBUGEAR
+                /* else {
+                    // Leer la respuesta de error del servidor
+                    BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
+                    StringBuilder errorResponse = new StringBuilder();
+                    String line;
+                    while ((line = errorReader.readLine()) != null) {
+                        errorResponse.append(line.trim());
+                    }
+                    System.out.println("Respuesta de error: " + errorResponse.toString());
+                }*/
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public String dateFormatter(String fecha, String formato, String from) {
+        return dateFormatter(fecha, formato, from, true, Locale.ENGLISH);
+    }
+
+    public String dateFormatter(String fecha, String formato, String from, boolean largeFormat, Locale localeFrom) {
+        String fechaF = fecha;
+        boolean today = false;
+
+        try {
+            if (from.equals("")) {
+                from = "yyyy-MM-dd HH:mm:ss.S";
+            } else {
+                today = true;
+            }
+
+            Calendar date = Calendar.getInstance();
+
+            try {
+                date.setTime(new SimpleDateFormat(from, localeFrom).parse(fecha));
+            } catch (Exception e) {
+                date.setTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", localeFrom).parse(fecha));
+            }
+
+            if (formato.equals("")) {
+                Calendar calendar = Calendar.getInstance();
+
+                long startTime = date.getTimeInMillis();
+                long endTime = calendar.getTimeInMillis();
+                double diffTime = endTime - startTime;
+                double diffDays = diffTime / (1000.0 * 60.0 * 60.0 * 24.0);
+
+                if (Math.ceil(Math.abs(diffDays)) >= 6) {
+                    formato = largeFormat ? "dd/MM/yyyy 'a' 'las' HH:mm" : "dd/MM/yyyy";
+                } else {
+                    int diaSemana = date.get(Calendar.DAY_OF_WEEK);
+                    int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+                    int timeDiff = dayOfWeek - diaSemana;
+
+                    if (date.compareTo(calendar) > 0) {
+                        if (diaSemana > dayOfWeek) {
+                            timeDiff = dayOfWeek - diaSemana;
+                        } else {
+                            timeDiff = diaSemana - dayOfWeek;
+                        }
+                    } else {
+                        if (diaSemana < dayOfWeek) {
+                            timeDiff = dayOfWeek - diaSemana;
+                        } else {
+                            timeDiff = diaSemana - dayOfWeek;
+                        }
+                    }
+                    switch (timeDiff) {
+                        case -2:
+                        case -3:
+                        case -4:
+                        case -5:
+                        case -6:
+                            formato = largeFormat ? "'Pr\u00F3ximo' EEEE 'a' 'las' HH:mm" : "'Pr\u00F3ximo' EEEE";
+                            break;
+                        case -1:
+                            formato = largeFormat ? "'Ma\u00F1ana' 'a' 'las' HH:mm" : "'Ma\u00F1ana'";
+                            break;
+                        case 0:
+                            formato = largeFormat ? "'Hoy' 'a' 'las' HH:mm" : today ? "'Hoy'" : "HH:mm";
+                            break;
+                        case 1:
+                            formato = largeFormat ? "'Ayer' 'a' 'las' HH:mm" : "'Ayer'";
+                            break;
+                        case 2:
+                        case 3:
+                        case 4:
+                        case 5:
+                        case 6:
+                            formato = largeFormat ? "EEEE dd 'de' MMMM 'a' 'las' HH:mm" : "EEEE";
+                            break;
+                        default:
+                            formato = largeFormat ? "dd/MM/yyyy 'a' 'las' HH:mm" : "dd/MM/yyyy";
+                            break;
+                    }
+                }
+            }
+
+            final SimpleDateFormat newFormat = new SimpleDateFormat(formato, new Locale("ES", "MX"));
+            fechaF = newFormat.format(date.getTime());
+        } catch (Exception e) {
+            fechaF = fecha;
+        }
+
+        return fechaF;
     }
 }

@@ -4,6 +4,8 @@ import resources.CommonSeekopUtilities;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -149,8 +151,8 @@ public class crearSeguimiento extends CommonSeekopUtilities {
         String idTipoActividad = "";
         String idtipoactividaddetalle = "";
         String dias = "";
-        String idStatusNuevo="";
-        String idSubStatus="";
+        String idStatusNuevo = "";
+        String idSubStatus = "";
         sql = "SELECT \n"
                 + "    nombre,\n"
                 + "    IdTipoActividadDetalle,\n"
@@ -201,13 +203,16 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                         + "'0000000000', '', '" + fecha + "', '0', 0, '1900-01-01 00:00:00', 0, '" + observaciones + "', \n"
                         + "'', '1900-01-01 00:00:00', 0, '', '" + getIdEjecutivo() + "', '1900-01-01 00:00:00', '0000000000', '" + getFechaHoy() + "', \n"
                         + "'" + auxIdPropietario + "', 0, 0, '0000000000', '" + idProceso + "', '" + idTipoNegocio + "', '', '0', \n"
-                        + "'0000000000', '"+idSubStatus+"', '0', '0000000000', '0', 0, '00000000000000000000', '1');";
+                        + "'0000000000', '" + idSubStatus + "', '0', '0000000000', '0', 0, '00000000000000000000', '1');";
 
                 if (getConnectionDistribuidor()
                         .execute(sql)) {
                     switch (actividad) {
                         case "1":
-
+                            Map<String, Object> parameters = new HashMap<>();
+                            parameters.put("fecha", dateFormatter(fecha + ":00", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss"));
+                            parameters.put("idseguimiento", idSeguimiento);
+                            sendDispositionRealTime("16", getIdDistribuidor(), getIdProspecto(), parameters);
                             break;
                         case "2":
                             sql = "INSERT INTO `" + getDbDistribuidor() + "`.`demostraciones` \n"
