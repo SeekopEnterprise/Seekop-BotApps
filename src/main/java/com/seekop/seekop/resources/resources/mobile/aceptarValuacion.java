@@ -5,6 +5,8 @@ import resources.CommonSeekopUtilities;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -64,6 +66,9 @@ public class aceptarValuacion extends CommonSeekopUtilities {
     }
 
     public void conection() {
+        
+        String activityId = "";
+        
         String sql = "SELECT \n"
                 + "    IdValuacion, IdStatus\n"
                 + "FROM\n"
@@ -74,8 +79,10 @@ public class aceptarValuacion extends CommonSeekopUtilities {
         String idStatus = "";
         if (this.aceptada) {
             idStatus = "12";
+            activityId = "97";
         } else {
             idStatus = "11";
+            activityId = "96";
         }
         if (getConnectionDistribuidor().executeQuery(sql)) {
             if (getConnectionDistribuidor().next()) {
@@ -83,6 +90,9 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                   
                 if (getConnectionDistribuidor().executeUpdate(sql)) 
                 {    
+                    
+                    sendDispositionValuation(idValuacion,activityId,true);
+
                     String baseSeminuevos = getNombreSeminuevos(getIdDistribuidor());
                     AbrirConnectionSeminuevos();
                     
@@ -100,7 +110,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
         }
 
     }
-
+    
     public static String encodeToISO88591(String input) {
         String resultado = "";
         try {
