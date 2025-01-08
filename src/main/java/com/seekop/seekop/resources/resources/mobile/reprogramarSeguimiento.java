@@ -3,6 +3,8 @@ package com.seekop.seekop.resources.resources.mobile;
 import resources.CommonSeekopUtilities;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,32 +29,34 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
     private String jsonBody = "[]";
     //////
     private String idValuacion = "";
+    private String typeName = "";
 
     public reprogramarSeguimiento(String recibidoJSON, String ip) {
         jsonMandado = recibidoJSON;
         if (recibidoJSON != null && !"".equals(recibidoJSON)) {
             recibidoJSON = recibidoJSON.toUpperCase();
-        JSONObject objetoJson;
-        try {
+            JSONObject objetoJson;
+            try {
                 objetoJson = new JSONObject(recibidoJSON.toUpperCase());
-            this.ip = ip;
-            this.token = objetoJson.getString("TOKEN");
-            this.idSeguimiento = objetoJson.getString("IDSEGUIMIENTO");
-            this.nuevaFecha = objetoJson.getString("FECHA");
-            this.idValuacion = objetoJson.getString("IDVALUACION");
-        } catch (JSONException ex) {
-            setErrorMensaje("JSON malformed: " + ex.toString());
-        }
-        if (!token.isEmpty()) {
-            getTokenInformation(token);
-            if (getConnectionDistribuidor() != null) {
-                conection();
-            } else {
-                setErrorMensaje("No se encontro una conexion para el TOKEN='" + token + "'");
+                this.ip = ip;
+                this.token = objetoJson.getString("TOKEN");
+                this.idSeguimiento = objetoJson.getString("IDSEGUIMIENTO");
+                this.nuevaFecha = objetoJson.getString("FECHA");
+                this.idValuacion = objetoJson.getString("IDVALUACION");
+                this.typeName = objetoJson.getString("TYPENAME");
+            } catch (JSONException ex) {
+                setErrorMensaje("JSON malformed: " + ex.toString());
             }
-        } else {
-            setErrorMensaje("el 'TOKEN' es necesario para esta operacion y no debe estar vacio");
-        }
+            if (!token.isEmpty()) {
+                getTokenInformation(token);
+                if (getConnectionDistribuidor() != null) {
+                    conection();
+                } else {
+                    setErrorMensaje("No se encontro una conexion para el TOKEN='" + token + "'");
+                }
+            } else {
+                setErrorMensaje("el 'TOKEN' es necesario para esta operacion y no debe estar vacio");
+            }
 
         } else {
             setErrorMensaje("Not JSON fount");
@@ -63,13 +67,13 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
 
     private void conection() {
         String distribuidor = getDbDistribuidor();
-        if(!idValuacion.isEmpty())
-        {
+        Map<String, Object> parameters = new HashMap<>();
+        String activityId = "";
+        if (!idValuacion.isEmpty()) {
             distribuidor = getNombreSeminuevos(getIdDistribuidor());
             AbrirConnectionSeminuevos();
         }
-        
-        
+
         int contadorReprogramaciones = 0;
         String sql = "SELECT \n"
                 + "    s.IdSeguimiento,\n"
@@ -106,9 +110,21 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                             + "WHERE\n"
                             + "    (`IdSeguimiento` = '" + idSeguimiento + "');";
                     if (getConnectionDistribuidor().execute(sql)) {
-                        
-                        if(!idValuacion.isEmpty())
-                        {
+                        switch (typeName.toLowerCase()) {
+                            case "appointment":
+                                activityId = "170";
+                                break;
+                            case "testDrive":
+                                activityId = "165";
+                                break;
+                            case "unknown":
+                            default:
+                                break;
+                        }
+                        parameters.put("fecha", getFechaHoy());
+                        parameters.put("idseguimiento", idSeguimiento);
+                        sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
+                        if (!idValuacion.isEmpty()) {
                             ////ACTUALIZA SEMINUEVOS
                             sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
                                     + "SET \n"
@@ -119,23 +135,21 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                             if (!getConnectionDistribuidor().execute(sql)) {
                                 setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
                             }
-                            
+
                             getTokenInformation(token);
                             if (getConnectionDistribuidor() != null) {
                                 ////ACTUALIZA NUEVOS
                                 sql = "UPDATE `" + getDbDistribuidor() + "`.`valuacion` \n"
-                                       + "SET \n"
-                                       + "    `Solicitud` = '" + nuevaFecha + "'\n"
-                                       + "WHERE\n"
-                                       + "    (`IdValuacion` = '" + idValuacion + "'\n"
-                                       + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
-                               if (!getConnectionDistribuidor().execute(sql)) {
-                                   setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
-                               }
-                            }        
-                        }
-                        else
-                        {                
+                                        + "SET \n"
+                                        + "    `Solicitud` = '" + nuevaFecha + "'\n"
+                                        + "WHERE\n"
+                                        + "    (`IdValuacion` = '" + idValuacion + "'\n"
+                                        + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
+                                if (!getConnectionDistribuidor().execute(sql)) {
+                                    setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                                }
+                            }
+                        } else {
                             switch (nombreUso) {
                                 case "Demostración":
                                     sql = "UPDATE `" + distribuidor + "`.`demostraciones` \n"

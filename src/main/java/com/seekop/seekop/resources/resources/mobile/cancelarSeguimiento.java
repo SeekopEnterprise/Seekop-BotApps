@@ -1,10 +1,18 @@
 package com.seekop.seekop.resources.resources.mobile;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import resources.CommonSeekopUtilities;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
+import javax.sql.DataSource;
 import org.json.JSONException;
 import org.json.JSONObject;
+import resources.ConnectionManager;
 
 /**
  *
@@ -27,31 +35,33 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
     private String jsonBody = "[]";
     //////
     private String idValuacion = "";
+    private String typeName = "";
 
     public cancelarSeguimiento(String recibidoJSON, String ip) {
-        jsonMandado=recibidoJSON;
+        jsonMandado = recibidoJSON;
         if (recibidoJSON != null && !"".equals(recibidoJSON)) {
             recibidoJSON = recibidoJSON.toUpperCase();
-        JSONObject objetoJson;
-        try {
+            JSONObject objetoJson;
+            try {
                 objetoJson = new JSONObject(recibidoJSON);
-            this.ip = ip;
-            this.token = objetoJson.getString("TOKEN");
-            this.idSeguimiento = objetoJson.getString("IDSEGUIMIENTO");
-            this.idValuacion = objetoJson.getString("IDVALUACION");
-        } catch (JSONException ex) {
-            setErrorMensaje("JSON malformed: " + ex.toString());
-        }
-        if (!token.isEmpty()) {
-            getTokenInformation(token);
-            if (getConnectionDistribuidor() != null) {
-                conection();
-            } else {
-                setErrorMensaje("No se encontro una conexion para el TOKEN='" + token + "'");
+                this.ip = ip;
+                this.token = objetoJson.getString("TOKEN");
+                this.idSeguimiento = objetoJson.getString("IDSEGUIMIENTO");
+                this.idValuacion = objetoJson.getString("IDVALUACION");
+                this.typeName = objetoJson.getString("TYPENAME");
+            } catch (JSONException ex) {
+                setErrorMensaje("JSON malformed: " + ex.toString());
             }
-        } else {
-            setErrorMensaje("el 'TOKEN' es necesario para esta operacion y no debe estar vacio");
-        }
+            if (!token.isEmpty()) {
+                getTokenInformation(token);
+                if (getConnectionDistribuidor() != null) {
+                    conection();
+                } else {
+                    setErrorMensaje("No se encontro una conexion para el TOKEN='" + token + "'");
+                }
+            } else {
+                setErrorMensaje("el 'TOKEN' es necesario para esta operacion y no debe estar vacio");
+            }
 
         } else {
             setErrorMensaje("Not JSON fount");
@@ -61,14 +71,15 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
     }
 
     private void conection() {
-        
+
         String distribuidor = getDbDistribuidor();
-        if(!idValuacion.isEmpty())
-        {
+        Map<String, Object> parameters = new HashMap<>();
+        String activityId = "";
+        if (!idValuacion.isEmpty()) {
             distribuidor = getNombreSeminuevos(getIdDistribuidor());
             AbrirConnectionSeminuevos();
         }
-        
+
         int contadorReprogramaciones = 0;
         String sql = "SELECT \n"
                 + "    s.IdSeguimiento,\n"
@@ -105,9 +116,23 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                             + "WHERE\n"
                             + "    (`IdSeguimiento` = '" + idSeguimiento + "');";
                     if (getConnectionDistribuidor().executeUpdate(sql)) {
-                        
-                        if(!idValuacion.isEmpty())
-                        {
+
+                        switch (typeName.toLowerCase()) {
+                            case "appointment":
+                                activityId = "58";
+                                break;
+                            case "testDrive":
+                                parameters.put("vin", getVinDemo());
+                                activityId = "57";
+                                break;
+                            case "unknown":
+                            default:
+                                break;
+                        }
+                        parameters.put("valor", -1);
+                        parameters.put("idseguimiento", idSeguimiento);
+                        sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
+                        if (!idValuacion.isEmpty()) {
                             ////ACTUALIZA SEMINUEVOS
                             sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
                                     + "SET \n"
@@ -118,23 +143,21 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                             if (!getConnectionDistribuidor().executeUpdate(sql)) {
                                 setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
                             }
-                            
+
                             getTokenInformation(token);
                             if (getConnectionDistribuidor() != null) {
                                 ////ACTUALIZA NUEVOS
                                 sql = "UPDATE `" + getDbDistribuidor() + "`.`valuacion` \n"
-                                            + "SET \n"
-                                            + "    `IdStatus` = '6'\n"
-                                            + "WHERE\n"
-                                            + "    (`IdValuacion` = '" + idValuacion + "'\n"
-                                            + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
-                               if (!getConnectionDistribuidor().execute(sql)) {
-                                   setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
-                               }
-                            }        
-                        }
-                        else
-                        {
+                                        + "SET \n"
+                                        + "    `IdStatus` = '6'\n"
+                                        + "WHERE\n"
+                                        + "    (`IdValuacion` = '" + idValuacion + "'\n"
+                                        + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
+                                if (!getConnectionDistribuidor().execute(sql)) {
+                                    setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                                }
+                            }
+                        } else {
                             switch (nombreUso) {
                                 case "Demostración":
                                     sql = "UPDATE `" + distribuidor + "`.`demostraciones` \n"
@@ -209,4 +232,29 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
         return json;
     }
 
+    private Object getVinDemo() {
+        StringBuilder query = new StringBuilder();
+        String noMotor = "";
+        query.append("SELECT ")
+                .append("demo.NoMotor ").append("FROM ")
+                .append(getDbDistribuidor())
+                .append(".demostraciones AS demo ")
+                .append("WHERE demo.IdSeguimiento = ?");
+
+        DataSource datasource = ConnectionManager.getDatasource(getPoolDeConexion());
+
+        assert datasource != null;
+
+        try (Connection con = datasource.getConnection(); PreparedStatement preparedStatement = con.prepareStatement(query.toString())) {
+            preparedStatement.setString(1, idSeguimiento);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    noMotor = resultSet.getString("NoMotor");
+                }
+            }
+        } catch (SQLException ex) {
+            setErrorMensaje("JSON malformed: " + ex.toString());
+        }
+        return noMotor;
+    }
 }
