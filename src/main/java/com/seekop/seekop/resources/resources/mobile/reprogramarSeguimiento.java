@@ -121,7 +121,6 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                             default:
                                 break;
                         }
-                        parameters.put("fecha", getFechaHoy());
                         parameters.put("idseguimiento", idSeguimiento);
                         sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
                         if (!idValuacion.isEmpty()) {

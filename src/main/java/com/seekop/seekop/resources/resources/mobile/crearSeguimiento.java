@@ -207,9 +207,9 @@ public class crearSeguimiento extends CommonSeekopUtilities {
 
                 if (getConnectionDistribuidor()
                         .execute(sql)) {
+                    Map<String, Object> parameters = new HashMap<>();
                     switch (actividad) {
                         case "1":
-                            Map<String, Object> parameters = new HashMap<>();
                             parameters.put("fecha", dateFormatter(fecha + ":00", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss"));
                             parameters.put("idseguimiento", idSeguimiento);
                             sendDispositionRealTime("16", getIdDistribuidor(), getIdProspecto(), parameters);
@@ -236,6 +236,10 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                             if (!getConnectionDistribuidor().execute(sql)) {
                                 setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
                             }
+                            parameters.put("fecha", dateFormatter(fecha + ":00", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss"));
+                            parameters.put("idseguimiento", idSeguimiento);
+                            parameters.put("vin", vin);
+                            sendDispositionRealTime("57", getIdDistribuidor(), getIdProspecto(), parameters);
                             break;
 
                         default:
