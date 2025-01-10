@@ -23,6 +23,11 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import javax.sql.DataSource;
+import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.GregorianCalendar;
 
 public class CommonSeekopUtilities {
 
@@ -80,6 +85,8 @@ public class CommonSeekopUtilities {
     private String generoEjecutivo = "";
     private String idProspecto = "";
     private String registro = "";
+    
+    private static String idDevice = "";
 
     public enum SearchType {
         BRAND,
@@ -965,7 +972,7 @@ public class CommonSeekopUtilities {
                     }
                 }
                 //NOTE:DEJAR POR SI NECESITO DEBUGEAR
-                /* else {
+                 /*else {
                     // Leer la respuesta de error del servidor
                     BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
                     StringBuilder errorResponse = new StringBuilder();
@@ -1125,5 +1132,120 @@ public class CommonSeekopUtilities {
         getTokenInformation(token);
 
         return propuestaActual;
+    }
+    
+    protected void sendNotification(String id, String idEjecutivo, String idProspecto,String titulo, String mensaje) 
+    
+    {
+        try {
+
+            String urlNotifications = traerValorConfiguracion("Notificaciones", "UrlNotificaciones");
+
+            URL url = new URL(urlNotifications.isEmpty() ? "https://bdc.sicopweb.com/xml/servicios/30/resources/fcm/send" : urlNotifications);
+
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json; utf-8");
+            conn.setRequestProperty("Accept", "application/json");
+            
+            String token = generateMD5Code(false);
+            conn.setRequestProperty("Token", token);
+            
+            conn.setDoOutput(true);
+            
+            String jsonString = "{\n" +
+                "    \"data\": {\n" +
+                "        \"IdProspecto\": \"" + idProspecto + "\"\n" +
+                "    },\n" +
+                "    \"id\": \"" + id + "\",\n" +
+                "    \"title\": \"" + titulo + "\",\n" +
+                "    \"body\": \"" + mensaje +"\",\n" +
+                "    \"userId\": \"" + idEjecutivo + "\",\n" +
+                "    \"referenceId\": \"\"\n" +
+                "}";
+            
+            Gson gson = new Gson();
+            Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
+            Map<String, Object> jsonMap = gson.fromJson(jsonString, mapType);
+
+            String json = gson.toJson(jsonMap);
+
+            try (OutputStream os = conn.getOutputStream()) {
+                byte[] input = json.getBytes("UTF-8");
+                os.write(input, 0, input.length);
+                os.close();
+            }
+
+            int responseCode = conn.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                    String inputLine;
+                    StringBuilder response = new StringBuilder();
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    //NOTE: DEJAR POR SI NECESITO DEBUGEAR
+                    /*try {
+                    Map<String, Object> responseMap = gson.fromJson(response.toString(), Map.class);
+                    System.out.println("Respuesta: " + responseMap);
+                    } catch (Exception e) {
+                    e.printStackTrace();
+                    }*/
+                }
+            }
+            //NOTE:DEJAR POR SI NECESITO DEBUGEAR
+             /*else {
+                // Leer la respuesta de error del servidor
+                BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
+                StringBuilder errorResponse = new StringBuilder();
+                String line;
+                while ((line = errorReader.readLine()) != null) {
+                    errorResponse.append(line.trim());
+                }
+                System.out.println("Respuesta de error: " + errorResponse.toString());
+            }*/
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    protected String generateMD5Code(boolean strict) {
+        
+        try
+        {
+            String s = "sicop.";
+            if(strict)
+            {
+                 s = s + idMarca + ".";
+                 s = s + idDistribuidor + ".";
+                 s = s + idDevice + ".";
+            }
+            
+            s = s + GregorianCalendar.getInstance().get(1) + ".";
+            s = s + (GregorianCalendar.getInstance().get(2) + 1) + ".";
+            s = s + GregorianCalendar.getInstance().get(5);
+            
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+            byte[] bytes = digest.digest(s.getBytes());
+            StringBuilder MD5Temp = new StringBuilder(2 * bytes.length);
+            
+            for (int i = 0; i < bytes.length; i++) 
+            {
+                int bajo = bytes[i] & 0xF;
+                int alto = (bytes[i] & 0xF0) >> 4;
+                MD5Temp.append(hex[alto]);
+                MD5Temp.append(hex[bajo]);
+            }
+            
+            return MD5Temp.toString();
+        }
+        catch(NoSuchAlgorithmException e)
+        {
+            System.out.println("getMD5HashCode: " + e.toString());
+        }
+        
+        return null;
     }
 }
