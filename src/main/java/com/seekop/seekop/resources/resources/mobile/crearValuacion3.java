@@ -104,7 +104,7 @@ public class crearValuacion3 extends CommonSeekopUtilities {
         String asignarVencidoSubasta = generateXMLresponseSolicitud(getIdProspecto());
         boolean respuesta = getProperties(asignarVencidoSubasta, "state");
         if (respuesta) {
-
+            sendDispositionValuation("","144",false);
         } else {
             setErrorMensaje("Ocurrio un error durante la solicitud favor de volver a intentar");
         }

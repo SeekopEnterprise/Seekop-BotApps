@@ -1072,4 +1072,58 @@ public class CommonSeekopUtilities {
 
         return fechaF;
     }
+    
+    public Boolean sendDispositionValuation(String idValuacion, String activityId, Boolean tienePropuesta) {
+        
+        Map<String, Object> parameters = new HashMap<>();
+        String propuesta = "0";
+        
+        if(tienePropuesta)
+        {
+            propuesta = getPropuestaValuacion(idValuacion);
+        }
+        
+        parameters.put("idvaluacion", idValuacion);
+        parameters.put("precio_valuacion",tienePropuesta ? propuesta : null);
+        parameters.put("fecha", getFechaHoy());
+
+        sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
+        
+        
+        return true;
+    }
+    
+    private String getPropuestaValuacion(String idValuacion) {
+        String propuestaActual = "0";
+
+        String baseSeminuevos = getNombreSeminuevos(getIdDistribuidor());
+        AbrirConnectionSeminuevos();
+
+        String sql = "SELECT \n"
+                + "Propuesta1, Propuesta2, Propuesta3, Propuesta4, Propuesta5\n"
+                + "FROM\n"
+                + baseSeminuevos + ".valuacionprecios\n"
+                + "WHERE\n"
+                + "IdValuacion = '" + idValuacion + "'";
+
+        if (getConnectionDistribuidor().executeQuery(sql)) {
+            if (getConnectionDistribuidor().next()) {
+                if (!"0".equals(getConnectionDistribuidor().getString("Propuesta5"))) {
+                    propuestaActual = getConnectionDistribuidor().getString("Propuesta5");
+                } else if (!"0".equals(getConnectionDistribuidor().getString("Propuesta4"))) {
+                    propuestaActual = getConnectionDistribuidor().getString("Propuesta4");
+                } else if (!"0".equals(getConnectionDistribuidor().getString("Propuesta3"))) {
+                    propuestaActual = getConnectionDistribuidor().getString("Propuesta3");
+                } else if (!"0".equals(getConnectionDistribuidor().getString("Propuesta2"))) {
+                    propuestaActual = getConnectionDistribuidor().getString("Propuesta2");
+                } else if (!"0".equals(getConnectionDistribuidor().getString("Propuesta1"))) {
+                    propuestaActual = getConnectionDistribuidor().getString("Propuesta1");
+                }
+            } 
+
+        }
+        getTokenInformation(token);
+
+        return propuestaActual;
+    }
 }

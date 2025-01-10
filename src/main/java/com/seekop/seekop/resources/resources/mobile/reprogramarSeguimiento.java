@@ -121,9 +121,9 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                             default:
                                 break;
                         }
-                        parameters.put("idseguimiento", idSeguimiento);
-                        sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
+                        
                         if (!idValuacion.isEmpty()) {
+                            sendDispositionValuation(idValuacion,"166",false);
                             ////ACTUALIZA SEMINUEVOS
                             sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
                                     + "SET \n"
@@ -149,6 +149,8 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                 }
                             }
                         } else {
+                            parameters.put("idseguimiento", idSeguimiento);
+                            sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
                             switch (nombreUso) {
                                 case "Demostración":
                                     sql = "UPDATE `" + distribuidor + "`.`demostraciones` \n"

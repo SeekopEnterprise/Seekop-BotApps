@@ -129,10 +129,10 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                             default:
                                 break;
                         }
-                        parameters.put("valor", -1);
-                        parameters.put("idseguimiento", idSeguimiento);
-                        sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
                         if (!idValuacion.isEmpty()) {
+                            
+                            sendDispositionValuation(idValuacion,"99",false);
+                            
                             ////ACTUALIZA SEMINUEVOS
                             sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
                                     + "SET \n"
@@ -158,6 +158,9 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                                 }
                             }
                         } else {
+                            parameters.put("valor", -1);
+                            parameters.put("idseguimiento", idSeguimiento);
+                            sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
                             switch (nombreUso) {
                                 case "Demostración":
                                     sql = "UPDATE `" + distribuidor + "`.`demostraciones` \n"
