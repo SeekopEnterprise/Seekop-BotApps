@@ -212,7 +212,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                         case "1":
                             parameters.put("fecha", dateFormatter(fecha + ":00", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss"));
                             parameters.put("idseguimiento", idSeguimiento);
-                            sendDispositionRealTime("16", getIdDistribuidor(), getIdProspecto(), parameters);
+                            sendDispositionRealTime("154", getIdDistribuidor(), getIdProspecto(), parameters);
                             break;
                         case "2":
                             sql = "INSERT INTO `" + getDbDistribuidor() + "`.`demostraciones` \n"
@@ -239,7 +239,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                             parameters.put("fecha", dateFormatter(fecha + ":00", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss"));
                             parameters.put("idseguimiento", idSeguimiento);
                             parameters.put("vin", vin);
-                            sendDispositionRealTime("57", getIdDistribuidor(), getIdProspecto(), parameters);
+                            sendDispositionRealTime("141", getIdDistribuidor(), getIdProspecto(), parameters);
                             break;
 
                         default:

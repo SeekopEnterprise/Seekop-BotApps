@@ -117,11 +117,11 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                             + "    (`IdSeguimiento` = '" + idSeguimiento + "');";
                     if (getConnectionDistribuidor().executeUpdate(sql)) {
 
-                        switch (typeName.toLowerCase()) {
-                            case "appointment":
+                        switch (typeName) {
+                            case "APPOINTMENT":
                                 activityId = "58";
                                 break;
-                            case "testDrive":
+                            case "TESTDRIVE":
                                 parameters.put("vin", getVinDemo());
                                 activityId = "57";
                                 break;
