@@ -110,11 +110,11 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                             + "WHERE\n"
                             + "    (`IdSeguimiento` = '" + idSeguimiento + "');";
                     if (getConnectionDistribuidor().execute(sql)) {
-                        switch (typeName.toLowerCase()) {
-                            case "appointment":
+                        switch (typeName) {
+                            case "APPOINTMENT":
                                 activityId = "170";
                                 break;
-                            case "testDrive":
+                            case "TESTDRIVE":
                                 activityId = "165";
                                 break;
                             case "unknown":
