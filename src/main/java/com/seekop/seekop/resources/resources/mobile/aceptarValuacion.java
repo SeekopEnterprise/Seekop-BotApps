@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 import org.json.JSONException;
 import org.json.JSONObject;
+import resources.ConnectionManager;
 
 /**
  *
@@ -31,6 +32,9 @@ public class aceptarValuacion extends CommonSeekopUtilities {
     //////
     private String idValuacion = "";
     private boolean aceptada = false;
+    private String idMotivo = "";
+    private String observaciones = "";
+    private String precio = "";
 
     public aceptarValuacion(String contenido, String ip) {
         recibidoJSON = contenido;
@@ -43,6 +47,9 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                 this.token = objetoJson.getString("Token");
                 this.idValuacion = objetoJson.getString("IdVauacion");
                 this.aceptada = objetoJson.getBoolean("Aceptada");
+                this.idMotivo = objetoJson.getString("IdMotivo");
+                this.observaciones = objetoJson.getString("Observaciones");
+                this.precio = objetoJson.getString("Precio");
 
             } catch (JSONException ex) {
                 setErrorMensaje("JSON malformed: " + ex.toString());
@@ -66,8 +73,8 @@ public class aceptarValuacion extends CommonSeekopUtilities {
     }
 
     public void conection() {
-        
-        String activityId = "";
+
+     String activityId = "";
         
         String sql = "SELECT \n"
                 + "    IdValuacion, IdStatus\n"
@@ -92,12 +99,25 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                 {    
                     
                     sendDispositionValuation(idValuacion,activityId,true);
-
+                    ConnectionManager connectionSeminuevos = abrirConnection(getIdDistribuidor());
                     String baseSeminuevos = getNombreSeminuevos(getIdDistribuidor());
                     AbrirConnectionSeminuevos();
                     
                     sql = "UPDATE " + baseSeminuevos + ".`valuacion` SET `IdStatus` = '" + idStatus + "' WHERE (`IdValuacion` = '" + idValuacion + "');";
+                    
                     getConnectionDistribuidor().executeUpdate(sql);
+                    if(!this.aceptada)
+                    {
+                        guardaMotivosRechazo(baseSeminuevos,idMotivo,"","0");
+                        if(!observaciones.isEmpty())
+                        {
+                            guardaMotivosRechazo(baseSeminuevos,"1414148999",observaciones,"0");
+                        }
+                        if(!precio.isEmpty())
+                        {
+                            guardaMotivosRechazo(baseSeminuevos,"1414148990","",precio);
+                        }
+                    }
 
                 } else {
                     setErrorMensaje("Error al actualizar valuacion= '" + getConnectionDistribuidor().getErrorMessage() + "'");
@@ -108,7 +128,6 @@ public class aceptarValuacion extends CommonSeekopUtilities {
         } else {
             setErrorMensaje("Error al buscar la valuacion='" + getConnectionDistribuidor().getErrorMessage() + "'");
         }
-
     }
     
     public static String encodeToISO88591(String input) {
@@ -167,5 +186,49 @@ public class aceptarValuacion extends CommonSeekopUtilities {
 
         return fecha;
     }
+    
+    private void guardaMotivosRechazo(String baseSeminuevos,String idMotivoLocal,String observacionesLocal,String precioLocal) {
+        
+        String idDeclinacion = "1";
+        idDeclinacion = getIdDeclinacion(baseSeminuevos);
+        
+        int number = Integer.parseInt(idDeclinacion);
+        number += 1;
+        // Convertir de nuevo a String si es necesario
+        String updatedIdDeclinacion = String.valueOf(number);
+        
+        ConnectionManager connectionSeminuevos = abrirConnection(getIdDistribuidor());
+        
+        String query = "INSERT INTO " + baseSeminuevos + ".ValuacionDeclinacion\n"
+                + "(IdValuacion, IdMotivo, IdDeclinacion, Observaciones, Precio, FechaRegistro) \n"
+                + "VALUES ('" + idValuacion + "', '" + idMotivoLocal + "',  '" + updatedIdDeclinacion + "', '" + observacionesLocal + "', '" + precioLocal + "', '" + getFechaHoy() + "');";
+        
+        
+        if (connectionSeminuevos.execute(query,false)) 
+        {
+            connectionSeminuevos.close();
+        } else {
+            setErrorMensaje(connectionSeminuevos.getErrorMessage());
+        }
+        connectionSeminuevos.close();
+    }
+    
+    
+     private String getIdDeclinacion(String baseSeminuevos) {
+        String idDeclinacion = "1";
+        
+        String sql = "SELECT MAX(IdDeclinacion) as IdDeclinacion FROM " + baseSeminuevos + ".Valuaciondeclinacion";
 
+            ConnectionManager connectionSeminuevos = abrirConnection(getIdDistribuidor());
+            if (connectionSeminuevos.executeQuery(sql)) {
+                while (connectionSeminuevos.next()) {
+                    idDeclinacion = connectionSeminuevos.getString("IdDeclinacion");
+                }
+            } else {
+            setErrorMensaje("Error al buscar la valuacion='" + connectionSeminuevos.getErrorMessage() + "'");
+        }
+         connectionSeminuevos.close();   
+
+        return idDeclinacion;
+    }
 }
