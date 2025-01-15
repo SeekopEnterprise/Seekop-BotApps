@@ -83,7 +83,7 @@ public class GetMotivos extends CommonSeekopUtilities {
                     }
                 }
             }
-            
+         connectionSeminuevos.close();   
         jsonBody = jsonBody.substring(0, jsonBody.length() - 1);
     }
 
