@@ -210,6 +210,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                     Map<String, Object> parameters = new HashMap<>();
                     switch (actividad) {
                         case "1":
+                            parameters.put("fecha", dateFormatter(fecha + ":00", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss"));
                             parameters.put("idseguimiento", idSeguimiento);
                             sendDispositionRealTime("16", getIdDistribuidor(), getIdProspecto(), parameters);
                             break;
