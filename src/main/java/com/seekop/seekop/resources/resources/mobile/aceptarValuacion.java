@@ -77,7 +77,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
      String activityId = "";
         
         String sql = "SELECT \n"
-                + "    IdValuacion, IdStatus\n"
+                + " *\n"
                 + "FROM\n"
                 + "    " + getDbDistribuidor() + ".valuacion\n"
                 + "WHERE\n"
@@ -92,7 +92,23 @@ public class aceptarValuacion extends CommonSeekopUtilities {
             activityId = "96";
         }
         if (getConnectionDistribuidor().executeQuery(sql)) {
+            
             if (getConnectionDistribuidor().next()) {
+                
+                String idValuador = getConnectionDistribuidor().getString("IdEjecutivoValuacion");
+                String idProspecto = getIdProspecto();
+                
+                String idMarcaValuacion = getConnectionDistribuidor().getString("IdMarcaAnterior");
+                String modeloValuacion = getConnectionDistribuidor().getString("ModeloActual");
+                String idAuto = getConnectionDistribuidor().getString("IdAutoActual");
+                String idProducto = getConnectionDistribuidor().getString("IdProductoActual");
+                String idColor = getConnectionDistribuidor().getString("IdColor");
+                String kilometraje = getConnectionDistribuidor().getString("Kilometraje");
+                String serie = getConnectionDistribuidor().getString("NoSerie");
+                String precioCompra = "";
+                String precioVenta = "";         
+                String propuesta = getPropuestaValuacion(idValuacion);
+                
                 sql = "UPDATE " + getDbDistribuidor() + ".`valuacion` SET `IdStatus` = '" + idStatus + "' WHERE (`IdValuacion` = '" + idValuacion + "');";
                   
                 if (getConnectionDistribuidor().executeUpdate(sql)) 
@@ -117,6 +133,56 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                         {
                             guardaMotivosRechazo(baseSeminuevos,"1414148990","",precio);
                         }
+                       
+                        String titulo = "Propuesta rechazada";
+                        String mensajeNotificacion = "El prospecto " + buscarNombreProspecto(idProspecto) + " rechazó la propuesta de valuación ";
+                        
+                        JSONObject dataObject = new JSONObject();
+                        dataObject.put("r", idProspecto);
+                        dataObject.put("r2", idValuacion);
+                        dataObject.put("r3", "");
+                        dataObject.put("r4", "11");
+                        
+                        sendNotification("27",idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);                                      
+                    }
+                    else
+                    {
+                        String titulo = "Propuesta aceptada";
+                        String mensajeNotificacion = "El prospecto " + buscarNombreProspecto(idProspecto) + " aceptó la propuesta de valuación ";
+                        
+                        JSONObject dataObject = new JSONObject();
+                        dataObject.put("r", idProspecto);
+                        dataObject.put("r2", idValuacion);
+                        dataObject.put("r3", "");
+                        dataObject.put("r4", "12");
+                        
+                        
+                        String isDalton = traerValorConfiguracion("Habilitar", "EstatusInventario");
+                        
+                        String idNotificacion = "";
+                        
+                        if (isDalton.equals("1")) {                        
+                            idNotificacion = "32";
+                        }
+                        else
+                        {
+                            dataObject.put("titulo", idProspecto);
+                            dataObject.put("mensaje", idValuacion);
+                            dataObject.put("r5", idMarcaValuacion);
+                            dataObject.put("r6", modeloValuacion);
+                            dataObject.put("r7", idAuto);
+                            dataObject.put("r8", idProducto);
+                            dataObject.put("r9", idColor);
+                            dataObject.put("r10", kilometraje);
+                            dataObject.put("r11", precioCompra);
+                            dataObject.put("r12", precioVenta);
+                            dataObject.put("r13", serie);
+                            dataObject.put("r14", propuesta);
+                            
+                            idNotificacion = "34";
+                        }
+                        
+                        sendNotification(idNotificacion,idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);  
                     }
 
                 } else {
