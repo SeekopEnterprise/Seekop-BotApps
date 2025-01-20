@@ -143,6 +143,10 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                             if (!getConnectionDistribuidor().executeUpdate(sql)) {
                                 setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
                             }
+                            else
+                            {
+                                sendNotification("id","ejecutivo","propsecto","Valuación","El prospecto X ha cancelado su cita de valuación");
+                            }
 
                             getTokenInformation(token);
                             if (getConnectionDistribuidor() != null) {
