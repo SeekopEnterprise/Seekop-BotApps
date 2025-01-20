@@ -156,8 +156,8 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                                 if (getConnectionDistribuidor().executeQuery(sqlValuacion)) {
                                     if (getConnectionDistribuidor().next()) {
                                         
-                                        String idProspecto = getConnectionDistribuidor().getString("IdEjecutivoValuacion");
-                                        String idValuador = getConnectionDistribuidor().getString("IdProspecto");
+                                        String idValuador = getConnectionDistribuidor().getString("IdEjecutivoValuacion");
+                                        String idProspecto = getConnectionDistribuidor().getString("IdProspecto");
                                         
                                         JSONObject dataObject = new JSONObject();
                                         dataObject.put("r", idProspecto);
