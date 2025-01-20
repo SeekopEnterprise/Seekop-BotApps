@@ -145,7 +145,32 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                             }
                             else
                             {
-                                sendNotification("id","ejecutivo","propsecto","Valuación","El prospecto X ha cancelado su cita de valuación");
+                                String sqlValuacion = "SELECT \n"
+                                + "    IdValuacion,IdEjecutivoValuacion, IdStatus\n"
+                                + "FROM\n"
+                                + "    " + getDbDistribuidor() + ".valuacion\n"
+                                + "WHERE\n"
+                                + "    idvaluacion = '" + idValuacion + "'\n"
+                                + "        AND IdProspecto = '" + getIdProspecto() + "';";
+ 
+                                if (getConnectionDistribuidor().executeQuery(sqlValuacion)) {
+                                    if (getConnectionDistribuidor().next()) {
+                                        
+                                        String idProspecto = getConnectionDistribuidor().getString("IdEjecutivoValuacion");
+                                        String idValuador = getConnectionDistribuidor().getString("IdProspecto");
+                                        
+                                        JSONObject dataObject = new JSONObject();
+                                        dataObject.put("r", idProspecto);
+                                        dataObject.put("r2", idValuacion);
+                                        dataObject.put("r3", "");
+                                        dataObject.put("r4", "6");
+
+                                        String titulo = "Valuación cancelada";
+                                        String mensajeNotificacion = "El prospecto " + buscarNombreProspecto(idProspecto) + " canceló la valuación ";
+
+                                        sendNotification("27",idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);  
+                                    }
+                                } 
                             }
 
                             getTokenInformation(token);

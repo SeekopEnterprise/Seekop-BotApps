@@ -28,6 +28,7 @@ import java.lang.reflect.Type;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.GregorianCalendar;
+import org.json.JSONObject;
 
 public class CommonSeekopUtilities {
 
@@ -297,6 +298,25 @@ public class CommonSeekopUtilities {
                 setErrorMensaje("No se encontraron datos para el prospecto '" + idProspecto + "'");
             }
         }
+    }
+    
+     public String buscarNombreProspecto(String idProspecto) {
+        String nombre = "";
+        String sql = "SELECT \n"
+                + "    IdProspecto, Nombre, Paterno, Materno, idpropietario, activo\n"
+                + "FROM\n"
+                + "    " + getDbDistribuidor() + ".prospectos\n"
+                + "WHERE\n"
+                + "    idprospecto = '" + idProspecto + "';";
+        if (getConnectionDistribuidor().executeQuery(sql)) {
+            if (getConnectionDistribuidor().next()) {
+                return nombre = validarvacio(getConnectionDistribuidor().getString("Nombre"), "") + " " + validarvacio(getConnectionDistribuidor().getString("Paterno"), "") +  " " + validarvacio(getConnectionDistribuidor().getString("Materno"), "");
+            } else {
+                setErrorMensaje("No se encontraron datos para el prospecto '" + idProspecto + "'");
+                return "";
+            }
+        }
+        return "";
     }
 
     public ConnectionManager abrirConnectionGrupoCorporativo(String idDistribuidor) {
@@ -1100,7 +1120,7 @@ public class CommonSeekopUtilities {
         return true;
     }
     
-    private String getPropuestaValuacion(String idValuacion) {
+    public String getPropuestaValuacion(String idValuacion) {
         String propuestaActual = "0";
 
         String baseSeminuevos = getNombreSeminuevos(getIdDistribuidor());
@@ -1134,7 +1154,7 @@ public class CommonSeekopUtilities {
         return propuestaActual;
     }
     
-    protected void sendNotification(String id, String idEjecutivo, String idProspecto,String titulo, String mensaje) 
+    protected void sendNotification(String id, String idEjecutivo, String idProspecto,String titulo, String mensaje,JSONObject dataObject) 
     
     {
         try {
@@ -1153,16 +1173,21 @@ public class CommonSeekopUtilities {
             
             conn.setDoOutput(true);
             
-            String jsonString = "{\n" +
-                "    \"data\": {\n" +
-                "        \"IdProspecto\": \"" + idProspecto + "\"\n" +
-                "    },\n" +
-                "    \"id\": \"" + id + "\",\n" +
-                "    \"title\": \"" + titulo + "\",\n" +
-                "    \"body\": \"" + mensaje +"\",\n" +
-                "    \"userId\": \"" + idEjecutivo + "\",\n" +
-                "    \"referenceId\": \"\"\n" +
-                "}";
+            // Crear el objeto JSON principal
+            JSONObject jsonObject = new JSONObject();
+
+            // Agregar "data" al objeto principal
+            if (dataObject.length() != 0) {
+                jsonObject.put("data", dataObject);
+            }
+            jsonObject.put("id", id);
+            jsonObject.put("title", titulo);
+            jsonObject.put("body", mensaje);
+            jsonObject.put("userId", idEjecutivo);
+            jsonObject.put("referenceId", "");
+
+            // Convertir el objeto JSON a String
+            String jsonString = jsonObject.toString();
             
             Gson gson = new Gson();
             Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
