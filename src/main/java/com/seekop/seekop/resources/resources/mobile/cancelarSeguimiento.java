@@ -145,19 +145,20 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                             }
                             else
                             {
+                                String idProspecto = getIdProspecto();
                                 String sqlValuacion = "SELECT \n"
                                 + "    IdValuacion,IdEjecutivoValuacion, IdStatus\n"
                                 + "FROM\n"
                                 + "    " + getDbDistribuidor() + ".valuacion\n"
                                 + "WHERE\n"
                                 + "    idvaluacion = '" + idValuacion + "'\n"
-                                + "        AND IdProspecto = '" + getIdProspecto() + "';";
+                                + "        AND IdProspecto = '" + idProspecto + "';";
  
                                 if (getConnectionDistribuidor().executeQuery(sqlValuacion)) {
                                     if (getConnectionDistribuidor().next()) {
                                         
                                         String idValuador = getConnectionDistribuidor().getString("IdEjecutivoValuacion");
-                                        String idProspecto = getConnectionDistribuidor().getString("IdProspecto");
+                                        
                                         
                                         JSONObject dataObject = new JSONObject();
                                         dataObject.put("r", idProspecto);
