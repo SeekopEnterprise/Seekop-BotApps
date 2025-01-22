@@ -119,6 +119,7 @@ public class GetProspectoStatus extends CommonSeekopUtilities {
                 ? getDbDistribuidor() : getDbMarca()) + ".tipoactividaddetalle tad ON s.idtipoactividaddetalle = tad.idtipoactividaddetalle\n"
                 + "WHERE\n"
                 + "    tad.TramiteCompra = '1' and Cumplida='1900-01-01 00:00:00'\n"
+                + "        AND s.idprospecto = '" + getIdProspecto() + "'\n"
                 + "LIMIT 1;";
         if (getConnectionDistribuidor().executeQuery(sql)) {
             if (getConnectionDistribuidor().next()) {
