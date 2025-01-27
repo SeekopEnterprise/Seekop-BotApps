@@ -114,7 +114,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                 if (getConnectionDistribuidor().executeUpdate(sql)) 
                 {    
                     
-                    sendDispositionValuation(idValuacion,activityId,true);
+                    sendDispositionValuation(idValuacion,activityId,true,null);
                     ConnectionManager connectionSeminuevos = abrirConnection(getIdDistribuidor());
                     String baseSeminuevos = getNombreSeminuevos(getIdDistribuidor());
                     AbrirConnectionSeminuevos();

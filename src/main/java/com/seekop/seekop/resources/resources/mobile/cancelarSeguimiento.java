@@ -131,7 +131,7 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                         }
                         if (!idValuacion.isEmpty()) {
                             
-                            sendDispositionValuation(idValuacion,"99",false);
+                            sendDispositionValuation(idValuacion,"99",false,null);
                             
                             ////ACTUALIZA SEMINUEVOS
                             sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"

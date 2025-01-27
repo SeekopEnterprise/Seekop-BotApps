@@ -1100,7 +1100,7 @@ public class CommonSeekopUtilities {
         return fechaF;
     }
     
-    public Boolean sendDispositionValuation(String idValuacion, String activityId, Boolean tienePropuesta) {
+    public Boolean sendDispositionValuation(String idValuacion, String activityId, Boolean tienePropuesta,Map<String, Object> parametersAux) {
         
         Map<String, Object> parameters = new HashMap<>();
         String propuesta = "0";
@@ -1113,9 +1113,12 @@ public class CommonSeekopUtilities {
         parameters.put("idvaluacion", idValuacion);
         parameters.put("precio_valuacion",tienePropuesta ? propuesta : null);
         parameters.put("fecha", getFechaHoy());
-
-        sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
         
+        if (parametersAux != null && !parametersAux.isEmpty()) {
+            parameters.putAll(parametersAux);
+        }
+        
+        sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
         
         return true;
     }
@@ -1210,16 +1213,16 @@ public class CommonSeekopUtilities {
                         response.append(inputLine);
                     }
                     //NOTE: DEJAR POR SI NECESITO DEBUGEAR
-                    /*try {
+                    try {
                     Map<String, Object> responseMap = gson.fromJson(response.toString(), Map.class);
                     System.out.println("Respuesta: " + responseMap);
                     } catch (Exception e) {
                     e.printStackTrace();
-                    }*/
+                    }
                 }
             }
             //NOTE:DEJAR POR SI NECESITO DEBUGEAR
-             /*else {
+             else {
                 // Leer la respuesta de error del servidor
                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
                 StringBuilder errorResponse = new StringBuilder();
@@ -1228,7 +1231,7 @@ public class CommonSeekopUtilities {
                     errorResponse.append(line.trim());
                 }
                 System.out.println("Respuesta de error: " + errorResponse.toString());
-            }*/
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
