@@ -123,7 +123,12 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                         }
                         
                         if (!idValuacion.isEmpty()) {
-                            sendDispositionValuation(idValuacion,"166",false);
+                            
+                            Map<String, Object> parametersValuation = new HashMap<>();
+                            parametersValuation.put("fecha_original", getFechaHoy());
+                            parametersValuation.put("fecha_nueva", nuevaFecha);
+                            
+                            sendDispositionValuation(idValuacion,"166",false,parametersValuation);
                             ////ACTUALIZA SEMINUEVOS
                             sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
                                     + "SET \n"
