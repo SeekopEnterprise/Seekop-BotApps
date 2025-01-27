@@ -1,12 +1,18 @@
 package com.seekop.seekop.resources.resources.mobile;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import resources.CommonSeekopUtilities;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import javax.sql.DataSource;
 import org.json.JSONException;
 import org.json.JSONObject;
+import resources.ConnectionManager;
 
 /**
  *
@@ -69,6 +75,7 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
         String distribuidor = getDbDistribuidor();
         Map<String, Object> parameters = new HashMap<>();
         String activityId = "";
+        String date = "";
         if (!idValuacion.isEmpty()) {
             distribuidor = getNombreSeminuevos(getIdDistribuidor());
             AbrirConnectionSeminuevos();
@@ -101,6 +108,7 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                     contadorReprogramaciones++;
                     String idUso = validarvacio(getConnectionDistribuidor().getString("Uso"), "");
                     String nombreUso = getIdUso(idUso);
+                    date = getOriginalDate();
                     sql = "UPDATE `" + distribuidor + "`.`seguimientos` \n"
                             + "SET \n"
                             + "    `Programada` = '" + nuevaFecha + "',\n"
@@ -109,6 +117,7 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                             + "    `IdModificado` = '" + getIdEjecutivo() + "'\n"
                             + "WHERE\n"
                             + "    (`IdSeguimiento` = '" + idSeguimiento + "');";
+
                     if (getConnectionDistribuidor().execute(sql)) {
                         switch (typeName) {
                             case "APPOINTMENT":
@@ -181,6 +190,8 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                 }
                             }
                         } else {
+                            parameters.put("fecha_original", date);
+                            parameters.put("fecha_nueva", nuevaFecha);
                             parameters.put("idseguimiento", idSeguimiento);
                             sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
                             switch (nombreUso) {
@@ -245,6 +256,32 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
         } else {
             setErrorMensaje(getConnectionATI().getErrorMessage());
         }
+    }
+    
+    private String getOriginalDate() {
+        StringBuilder query = new StringBuilder();
+        String date = "";
+        query.append("SELECT ")
+                .append(" Programada ").append("FROM ")
+                .append(getDbDistribuidor())
+                .append(".seguimientos ")
+                .append("WHERE IdSeguimiento = ?");
+
+        DataSource datasource = ConnectionManager.getDatasource(getPoolDeConexion());
+
+        assert datasource != null;
+
+        try (Connection con = datasource.getConnection(); PreparedStatement preparedStatement = con.prepareStatement(query.toString())) {
+            preparedStatement.setString(1, idSeguimiento);
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    date = resultSet.getString("Programada");
+                }
+            }
+        } catch (SQLException ex) {
+            setErrorMensaje("JSON malformed: " + ex.toString());
+        }
+        return date;
     }
 
     public String getJson() {
