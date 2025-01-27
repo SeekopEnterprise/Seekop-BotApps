@@ -133,25 +133,11 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                         
                         if (!idValuacion.isEmpty()) {
                             
-                            Map<String, Object> parametersValuation = new HashMap<>();
-                            parametersValuation.put("fecha_original", getFechaHoy());
-                            parametersValuation.put("fecha_nueva", nuevaFecha);
-                            
-                            sendDispositionValuation(idValuacion,"166",false,parametersValuation);
-                            ////ACTUALIZA SEMINUEVOS
-                            sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
-                                    + "SET \n"
-                                    + "    `Solicitud` = '" + nuevaFecha + "'\n"
-                                    + "WHERE\n"
-                                    + "    (`IdSeguimiento` = '" + idSeguimiento + "'\n"
-                                    + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
-                            if (!getConnectionDistribuidor().execute(sql)) {
-                                setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
-                            }
+                            String fechaSolicita = "";
                             
                              String idProspecto = getIdProspecto();
                              String sqlValuacion = "SELECT \n"
-                                + "    IdValuacion,IdEjecutivoValuacion, IdStatus\n"
+                                + "    IdValuacion,IdEjecutivoValuacion,Solicitud, IdStatus\n"
                                 + "FROM\n"
                                 + "    " + getDbDistribuidor() + ".valuacion\n"
                                 + "WHERE\n"
@@ -161,6 +147,7 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                 if (getConnectionDistribuidor().executeQuery(sqlValuacion)) {
                                     if (getConnectionDistribuidor().next()) {
                                         
+                                        fechaSolicita = getConnectionDistribuidor().getString("Solicitud");
                                         String idValuador = getConnectionDistribuidor().getString("IdEjecutivoValuacion");
                                         
                                         JSONObject dataObject = new JSONObject();
@@ -175,6 +162,23 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                         sendNotification("27",idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);  
                                     }
                                 } 
+                                
+                                
+                            Map<String, Object> parametersValuation = new HashMap<>();
+                            parametersValuation.put("fecha_original", fechaSolicita);
+                            parametersValuation.put("fecha_nueva", nuevaFecha);
+                            
+                            sendDispositionValuation(idValuacion,"166",false,parametersValuation);
+                            ////ACTUALIZA SEMINUEVOS
+                            sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
+                                    + "SET \n"
+                                    + "    `Solicitud` = '" + nuevaFecha + "'\n"
+                                    + "WHERE\n"
+                                    + "    (`IdSeguimiento` = '" + idSeguimiento + "'\n"
+                                    + "        AND `IdProspecto` = '" + getIdProspecto() + "');";
+                            if (!getConnectionDistribuidor().execute(sql)) {
+                                setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                            }
                             
                             getTokenInformation(token);
                             if (getConnectionDistribuidor() != null) {
