@@ -107,6 +107,7 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                     contadorReprogramaciones++;
                     String idUso = validarvacio(getConnectionDistribuidor().getString("Uso"), "");
                     String nombreUso = getIdUso(idUso);
+                    String originalDate = formatTimestamp(getConnectionDistribuidor().getString("Programada"));
                     sql = "UPDATE `" + distribuidor + "`.`seguimientos` \n"
                             + "SET \n"
                             + "    `Cumplida` = '" + getFechaHoy() + "',\n"
@@ -190,7 +191,7 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                         } else {
                             parameters.put("valor", -1);
                             parameters.put("idseguimiento", idSeguimiento);
-                            parameters.put("fecha_original", getOriginalDate());
+                            parameters.put("fecha_original", originalDate);
                             sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
                             switch (nombreUso) {
                                 case "Demostración":
@@ -290,31 +291,5 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
             setErrorMensaje("JSON malformed: " + ex.toString());
         }
         return noMotor;
-    }
-
-    private String getOriginalDate() {
-        StringBuilder query = new StringBuilder();
-        String date = "";
-        query.append("SELECT ")
-                .append(" Programada ").append("FROM ")
-                .append(getDbDistribuidor())
-                .append(".seguimientos ")
-                .append("WHERE IdSeguimiento = ?");
-
-        DataSource datasource = ConnectionManager.getDatasource(getPoolDeConexion());
-
-        assert datasource != null;
-
-        try (Connection con = datasource.getConnection(); PreparedStatement preparedStatement = con.prepareStatement(query.toString())) {
-            preparedStatement.setString(1, idSeguimiento);
-            try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                while (resultSet.next()) {
-                    date = resultSet.getString("Programada");
-                }
-            }
-        } catch (SQLException ex) {
-            setErrorMensaje("JSON malformed: " + ex.toString());
-        }
-        return date;
     }
 }

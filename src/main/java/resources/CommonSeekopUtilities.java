@@ -1276,4 +1276,16 @@ public class CommonSeekopUtilities {
         
         return null;
     }
+    
+    public static String formatTimestamp(String originalTimestamp) {
+        try {
+            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+            SimpleDateFormat outputFormat = new SimpleDateFormat("yyyy:MM:dd HH:mm:ss");
+            Date date = inputFormat.parse(originalTimestamp);
+            return outputFormat.format(date);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
