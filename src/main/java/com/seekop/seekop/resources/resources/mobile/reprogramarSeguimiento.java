@@ -1,8 +1,14 @@
 package com.seekop.seekop.resources.resources.mobile;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.ParseException;
 import resources.CommonSeekopUtilities;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import org.json.JSONException;
@@ -158,9 +164,21 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                 
                                 
                             Map<String, Object> parametersValuation = new HashMap<>();
-                            parametersValuation.put("fecha_original", fechaSolicita);
-                            parametersValuation.put("fecha_nueva", nuevaFecha);
-                            
+                            SimpleDateFormat formatoEntrada = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
+                            SimpleDateFormat formatoSalida = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                                      
+                            try {
+                                Date fecha = formatoEntrada.parse(fechaSolicita);
+                                String fechaFormateada = formatoSalida.format(fecha);
+                                
+                                parametersValuation.put("fecha_original", fechaFormateada);
+                                parametersValuation.put("fecha_nueva", nuevaFecha);
+
+                                System.out.println("Fecha formateada: " + fechaFormateada);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+
                             sendDispositionValuation(idValuacion,"166",false,parametersValuation);
                             ////ACTUALIZA SEMINUEVOS
                             sql = "UPDATE `" + distribuidor + "`.`valuacion` \n"
