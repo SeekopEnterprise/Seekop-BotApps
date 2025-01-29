@@ -1288,4 +1288,31 @@ public class CommonSeekopUtilities {
             return null;
         }
     }
+
+    public String getIdCheckList(String idValuacion,String idProspecto,String distribuidor,boolean openConection) {
+
+        String idCheckList = "";
+        if(openConection)
+        {
+            AbrirConnectionSeminuevos();
+        }
+
+        String sql = "SELECT \n"
+                + "IdChecklist\n"
+                + "FROM\n"
+                + distribuidor + ".checklistlegal\n"
+                + "WHERE\n"
+                + "IdValuacion = '" + idValuacion + "'\n"
+                + " AND IdProspecto = '" + idProspecto + "'";
+        if (getConnectionDistribuidor().executeQuery(sql)) {
+            if (getConnectionDistribuidor().next()) {
+                idCheckList = getConnectionDistribuidor().getString("IdChecklist");
+            }
+        }
+        if(openConection)
+        {
+            getTokenInformation(token);
+        }
+        return idCheckList;
+    }
 }

@@ -115,8 +115,8 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                 {    
                     
                     sendDispositionValuation(idValuacion,activityId,true,null);
-                    ConnectionManager connectionSeminuevos = abrirConnection(getIdDistribuidor());
                     String baseSeminuevos = getNombreSeminuevos(getIdDistribuidor());
+                    String idCheckList = getIdCheckList(idValuacion,idProspecto,baseSeminuevos,true);
                     AbrirConnectionSeminuevos();
                     
                     sql = "UPDATE " + baseSeminuevos + ".`valuacion` SET `IdStatus` = '" + idStatus + "' WHERE (`IdValuacion` = '" + idValuacion + "');";
@@ -140,7 +140,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                         JSONObject dataObject = new JSONObject();
                         dataObject.put("r", idProspecto);
                         dataObject.put("r2", idValuacion);
-                        dataObject.put("r3", "");
+                        dataObject.put("r3", idCheckList);
                         dataObject.put("r4", "11");
                         
                         sendNotification("27",idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);                                      

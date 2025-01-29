@@ -132,9 +132,11 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                         
                         if (!idValuacion.isEmpty()) {
                             
-                            String fechaSolicita = "";
-                            
+                             String fechaSolicita = "";
                              String idProspecto = getIdProspecto();
+                             String idCheckList = getIdCheckList(idValuacion,idProspecto,getDbDistribuidor(),false);
+                            
+                            
                              String sqlValuacion = "SELECT \n"
                                 + "    IdValuacion,IdEjecutivoValuacion,Solicitud, IdStatus\n"
                                 + "FROM\n"
@@ -152,7 +154,7 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                         JSONObject dataObject = new JSONObject();
                                         dataObject.put("r", idProspecto);
                                         dataObject.put("r2", idValuacion);
-                                        dataObject.put("r3", "");
+                                        dataObject.put("r3", idCheckList);
                                         dataObject.put("r4", "6");
 
                                         String titulo = "Valuación reprogramada";
