@@ -164,7 +164,7 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                                         JSONObject dataObject = new JSONObject();
                                         dataObject.put("r", idProspecto);
                                         dataObject.put("r2", idValuacion);
-                                        dataObject.put("r3", "");
+                                        dataObject.put("r3", getIdCheckList(idValuacion,idProspecto,distribuidor,false));
                                         dataObject.put("r4", "6");
 
                                         String titulo = "Valuación cancelada";
