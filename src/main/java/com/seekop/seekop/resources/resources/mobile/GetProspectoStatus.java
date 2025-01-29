@@ -110,20 +110,43 @@ public class GetProspectoStatus extends CommonSeekopUtilities {
                 citas = true;
             }
         }
-        sql = "SELECT \n"
-                + "    s.idseguimiento, s.idtipoactividaddetalle, tad.nombre\n"
-                + "FROM\n"
-                + "    " + getDbDistribuidor() + ".seguimientos s\n"
-                + "        LEFT JOIN\n"
-                + "    " + (traerValorConfiguracion("Multiseguimiento", "Migrar").equals("1")
-                ? getDbDistribuidor() : getDbMarca()) + ".tipoactividaddetalle tad ON s.idtipoactividaddetalle = tad.idtipoactividaddetalle\n"
-                + "WHERE\n"
-                + "    tad.TramiteCompra = '1' and Cumplida='1900-01-01 00:00:00'\n"
-                + "        AND s.idprospecto = '" + getIdProspecto() + "'\n"
-                + "LIMIT 1;";
-        if (getConnectionDistribuidor().executeQuery(sql)) {
+        String queryByStatus = "SELECT \n"
+                + "    CASE \n"
+                + "        WHEN st.tipo NOT IN ('P', 'E', 'R', 'S') THEN \n"
+                + "            (SELECT pt.IdProceso \n"
+                + "             FROM " + getDbDistribuidor() + ".prospectostiponegocio pt \n"
+                + "             WHERE pt.IdProspecto = pr.IdProspecto \n"
+                + "             ORDER BY pt.registro DESC \n"
+                + "             LIMIT 1) \n"
+                + "        ELSE NULL \n"
+                + "    END AS id \n"
+                + "FROM \n"
+                + "    " + getDbDistribuidor() + ".prospectos pr \n"
+                + "JOIN \n"
+                + "    " + getDbMarca() + ".status st ON pr.IdStatus = st.IdStatus \n"
+                + "WHERE \n"
+                + "    pr.IdProspecto = '" + getIdProspecto() + "';";
+
+        if (getConnectionDistribuidor().executeQuery(queryByStatus)) {
             if (getConnectionDistribuidor().next()) {
-                compra = true;
+                String processId = getConnectionDistribuidor().getString("id");
+
+                sql = "SELECT \n"
+                        + "    s.idseguimiento, s.idtipoactividaddetalle, tad.nombre\n"
+                        + "FROM\n"
+                        + "    " + getDbDistribuidor() + ".seguimientos s\n"
+                        + "        LEFT JOIN\n"
+                        + "    " + (traerValorConfiguracion("Multiseguimiento", "Migrar").equals("1")
+                        ? getDbDistribuidor() : getDbMarca()) + ".tipoactividaddetalle tad ON s.idtipoactividaddetalle = tad.idtipoactividaddetalle\n"
+                        + "WHERE\n"
+                        + "    tad.TramiteCompra = '1'\n AND s.IdProceso = '" + processId + "'\n"
+                        + "        AND s.idprospecto = '" + getIdProspecto() + "'\n"
+                        + "LIMIT 1;";
+                if (getConnectionDistribuidor().executeQuery(sql)) {
+                    if (getConnectionDistribuidor().next()) {
+                        compra = true;
+                    }
+                }
             }
         }
         jsonBody = "{\n"
