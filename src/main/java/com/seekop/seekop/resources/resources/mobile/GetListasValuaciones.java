@@ -273,7 +273,11 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
                 } 
             }
         }
-        return propuestaActual;
+        
+        int numeroSinDecimales = (int) Double.parseDouble(propuestaActual);
+        String resultado = Integer.toString(numeroSinDecimales);
+        
+        return resultado;
     }
     
    private String getPropuestaActual(String idValuacion,String idStatus) {
@@ -306,8 +310,11 @@ public class GetListasValuaciones extends CommonSeekopUtilities {
 
         }
     }
+    
+    int numeroSinDecimales = (int) Double.parseDouble(propuestaActual);
+    String resultado = Integer.toString(numeroSinDecimales);
  
-    return propuestaActual;
+    return resultado;
 }
    
 

@@ -1153,8 +1153,11 @@ public class CommonSeekopUtilities {
 
         }
         getTokenInformation(token);
+        
+        int numeroSinDecimales = (int) Double.parseDouble(propuestaActual);
+        String resultado = Integer.toString(numeroSinDecimales);
 
-        return propuestaActual;
+        return resultado;
     }
     
     protected void sendNotification(String id, String idEjecutivo, String idProspecto,String titulo, String mensaje,JSONObject dataObject) 
