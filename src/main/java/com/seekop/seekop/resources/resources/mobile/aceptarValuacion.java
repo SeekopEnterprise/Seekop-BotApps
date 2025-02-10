@@ -118,6 +118,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                     String baseSeminuevos = getNombreSeminuevos(getIdDistribuidor());
                     String idCheckList = getIdCheckList(idValuacion,idProspecto,baseSeminuevos,true);
                     AbrirConnectionSeminuevos();
+                    String nombreProspecto = buscarNombreProspecto(idProspecto);
                     
                     sql = "UPDATE " + baseSeminuevos + ".`valuacion` SET `IdStatus` = '" + idStatus + "' WHERE (`IdValuacion` = '" + idValuacion + "');";
                     
@@ -135,7 +136,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                         }
                        
                         String titulo = "Propuesta rechazada";
-                        String mensajeNotificacion = "El prospecto " + buscarNombreProspecto(idProspecto) + " rechazó la propuesta de valuación ";
+                        String mensajeNotificacion = "El prospecto " + nombreProspecto + " rechazó la propuesta de valuación ";
                         
                         JSONObject dataObject = new JSONObject();
                         dataObject.put("r", idProspecto);
@@ -148,24 +149,30 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                     else
                     {
                         String titulo = "Propuesta aceptada";
-                        String mensajeNotificacion = "El prospecto " + buscarNombreProspecto(idProspecto) + " aceptó la propuesta de valuación ";
+                        String mensajeNotificacion = "El prospecto " + nombreProspecto + " aceptó la propuesta de valuación ";
                         
                         JSONObject dataObject = new JSONObject();
-                        dataObject.put("r", idProspecto);
-                        dataObject.put("r2", idValuacion);
-                        dataObject.put("r3", "");
-                        dataObject.put("r4", "12");
-                        
-                        
+                       
                         String isDalton = traerValorConfiguracion("Habilitar", "EstatusInventario");
                         
                         String idNotificacion = "";
                         
                         if (isDalton.equals("1")) {                        
                             idNotificacion = "32";
+                            
+                            dataObject.put("r", idValuacion);
+                            dataObject.put("r2", idCheckList);
+                            dataObject.put("r3", idProspecto);
+                            dataObject.put("r4", nombreProspecto);
+                            dataObject.put("r5", "1");
+                            dataObject.put("r6", "12");
                         }
                         else
                         {
+                            dataObject.put("r", idProspecto);
+                            dataObject.put("r2", idValuacion);
+                            dataObject.put("r3", "");
+                            dataObject.put("r4", "12");
                             dataObject.put("titulo", idProspecto);
                             dataObject.put("mensaje", idValuacion);
                             dataObject.put("r5", idMarcaValuacion);
