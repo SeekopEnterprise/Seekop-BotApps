@@ -636,17 +636,28 @@ public class CommonSeekopUtilities {
         String clave = "";
         if (isApuntadoSeminuevo()) {
             String tipoClave = traerValorConfiguracion("Valuacion", "HabilitarPreciosLibroAzul");
-            switch (tipoClave) {
-                case "1":
-                    clave = "And " + apostrofe + ".Clave IN ('sbb') \n";
-                    break;
-                case "2":
-                    clave = "And " + apostrofe + ".Clave IN ('atm') \n";
-                    break;
-                default:
-                    clave = "And " + apostrofe + ".Clave NOT IN ('sbb', 'atm') \n";
-                    break;
+            String isDalton = traerValorConfiguracion("Habilitar", "EstatusInventario");
+            
+            if(isDalton.equals("1"))
+            {
+                clave = "And " + apostrofe + ".Clave IN ('DLTN') \n";
             }
+            else
+            {
+                switch (tipoClave) 
+                {
+                    case "1":
+                        clave = "And " + apostrofe + ".Clave IN ('sbb') \n";
+                        break;
+                    case "2":
+                        clave = "And " + apostrofe + ".Clave IN ('atm') \n";
+                        break;
+                    default:
+                        clave = "And " + apostrofe + ".Clave NOT IN ('sbb', 'atm') \n";
+                    break;
+                }
+            }
+            
             if (getIdPais().equals("EC")) {
                 clave = "And " + apostrofe + ".Clave IN ('LAE') \n";
             }
