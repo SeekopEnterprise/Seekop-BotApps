@@ -144,7 +144,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                         dataObject.put("r3", idCheckList);
                         dataObject.put("r4", "11");
                         
-                        sendNotification("27",idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);                                      
+                        sendNotification("27",idValuador,titulo,mensajeNotificacion,dataObject);                                      
                     }
                     else
                     {
@@ -189,7 +189,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                             idNotificacion = "34";
                         }
                         
-                        sendNotification(idNotificacion,idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);  
+                        sendNotification(idNotificacion,idValuador,titulo,mensajeNotificacion,dataObject);  
                     }
 
                 } else {

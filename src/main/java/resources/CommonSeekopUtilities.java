@@ -1171,7 +1171,7 @@ public class CommonSeekopUtilities {
         return resultado;
     }
     
-    protected void sendNotification(String id, String idEjecutivo, String idProspecto,String titulo, String mensaje,JSONObject dataObject) 
+    protected void sendNotification(String id, String idEjecutivo,String titulo, String mensaje,JSONObject dataObject) 
     
     {
         try {
@@ -1329,4 +1329,24 @@ public class CommonSeekopUtilities {
         }
         return idCheckList;
     }
+    
+     public static String capitalize(String str) {
+        String[] words = removeMultipleSpaces(str).split(" ");
+        StringBuilder capitalized = new StringBuilder();
+
+        for (String word : words) {
+            if (word.length() > 0) {
+                capitalized.append(Character.toUpperCase(word.charAt(0)));
+                capitalized.append(word.substring(1).toLowerCase());
+                capitalized.append(" ");
+            }
+        }
+
+        return capitalized.toString().trim();
+    }
+     
+     public static String removeMultipleSpaces(String str) {
+        return str.replaceAll("\\s+", " ").trim();
+    }
+
 }

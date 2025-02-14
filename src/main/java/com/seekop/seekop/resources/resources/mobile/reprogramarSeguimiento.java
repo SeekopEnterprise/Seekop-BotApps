@@ -160,7 +160,7 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                         String titulo = "Valuación reprogramada";
                                         String mensajeNotificacion = "El prospecto " + buscarNombreProspecto(idProspecto) + " reprogramó la valuación para el: " + nuevaFecha;
 
-                                        sendNotification("27",idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);  
+                                        sendNotification("27",idValuador,titulo,mensajeNotificacion,dataObject);  
                                     }
                                 } 
                                 

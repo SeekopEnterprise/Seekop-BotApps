@@ -208,11 +208,27 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                 if (getConnectionDistribuidor()
                         .execute(sql)) {
                     Map<String, Object> parameters = new HashMap<>();
+                    
+                    String idProspecto = getIdProspecto();
+                    String nombreProspecto = capitalize(buscarNombreProspecto(idProspecto));
+                    
+                    String titulo = "";
+                    String mensajeNotificacion = "";
+                    String idEjecutivo = getIdEjecutivo();
+
+                    JSONObject dataObject = new JSONObject();
+                    dataObject.put("r", idSeguimiento);
+                    dataObject.put("r2", idProspecto);
+                    
                     switch (actividad) {
                         case "1":
                             parameters.put("fecha", dateFormatter(fecha + ":00", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss"));
                             parameters.put("idseguimiento", idSeguimiento);
                             sendDispositionRealTime("16", getIdDistribuidor(), getIdProspecto(), parameters);
+                            
+                            titulo = "Nueva cita agendada";
+                            mensajeNotificacion = "El prospecto " + nombreProspecto + " agendó una cita para el día " + fecha + "";
+                            sendNotification("1",idEjecutivo,titulo,mensajeNotificacion,dataObject);  
                             break;
                         case "2":
                             sql = "INSERT INTO `" + getDbDistribuidor() + "`.`demostraciones` \n"
@@ -238,6 +254,10 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                             }
                             parameters.put("vin", vin);
                             sendDispositionRealTime("141", getIdDistribuidor(), getIdProspecto(), parameters);
+                            
+                            titulo = "Nueva demostración agendada";
+                            mensajeNotificacion = "El prospecto " + nombreProspecto + " agendó una demostración para el día " + fecha + "";
+                            sendNotification("1",idEjecutivo,titulo,mensajeNotificacion,dataObject);  
                             break;
 
                         default:
