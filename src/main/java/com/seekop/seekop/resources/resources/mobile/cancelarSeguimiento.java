@@ -170,7 +170,7 @@ public class cancelarSeguimiento extends CommonSeekopUtilities {
                                         String titulo = "Valuación cancelada";
                                         String mensajeNotificacion = "El prospecto " + buscarNombreProspecto(idProspecto) + " canceló la valuación ";
 
-                                        sendNotification("27",idValuador,idProspecto,titulo,mensajeNotificacion,dataObject);  
+                                        sendNotification("27",idValuador,titulo,mensajeNotificacion,dataObject);  
                                     }
                                 } 
                             }
