@@ -98,7 +98,7 @@ public class aceptarValuacion extends CommonSeekopUtilities {
                 String idValuador = getConnectionDistribuidor().getString("IdEjecutivoValuacion");
                 String idProspecto = getIdProspecto();
                 
-                String idMarcaValuacion = getConnectionDistribuidor().getString("IdMarcaAnterior");
+                String idMarcaValuacion = getConnectionDistribuidor().getString("IdMarca");
                 String modeloValuacion = getConnectionDistribuidor().getString("ModeloActual");
                 String idAuto = getConnectionDistribuidor().getString("IdAutoActual");
                 String idProducto = getConnectionDistribuidor().getString("IdProductoActual");
