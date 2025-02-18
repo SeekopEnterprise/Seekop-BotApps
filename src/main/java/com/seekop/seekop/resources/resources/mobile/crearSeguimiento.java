@@ -225,6 +225,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                             parameters.put("fecha", dateFormatter(fecha + ":00", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm:ss"));
                             parameters.put("idseguimiento", idSeguimiento);
                             sendDispositionRealTime("16", getIdDistribuidor(), getIdProspecto(), parameters);
+                            sendDispositionRealTime("153", getIdDistribuidor(), getIdProspecto(), parameters);
                             
                             titulo = "Nueva cita agendada";
                             mensajeNotificacion = "El prospecto " + nombreProspecto + " agendó una cita para el día " + fecha + "";
