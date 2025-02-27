@@ -93,13 +93,13 @@ public class CommonSeekopUtilities {
     
     private static String idDevice = "";
     
-    private String origen = "3";
-    private String licencia = null;
+    private String origen = "4";
+    private String licencia = "S/D";
     private String email;
-    private String idUsuario;
-    private String poolName;
-    private String dataBase;
-    private String marca;
+    private String poolNameBPM;
+    private String idMarcaBPM;
+    private String idDistribuidorBPM;
+    private String baseNameBPM;
 
 
     public enum SearchType {
@@ -120,6 +120,34 @@ public class CommonSeekopUtilities {
                 this.registro = connectionATI.getString("REGISTRO");
                 abrirConnectionDistribuidor(connectionATI.getString("IDDISTRIBUIDOR"));
                 buscarDatosProspecto(this.idProspecto);
+            }
+        } else {
+            setErrorMensaje(connectionATI.getErrorMessage());
+        }
+
+    }
+
+    public void getTokenInformationBPM(String token) {
+        //String sql = "SELECT IDMARCA, IDDISTRIBUIDOR FROM sicopbdc.tokens WHERE TOKEN='" + token + "';";
+        
+        String sql = "SELECT " +
+                "t.IDMARCA as IDMARCA, " +
+                "t.IDDISTRIBUIDOR as IDDISTRIBUIDOR, " +
+                "b.NOMBRE AS NOMBRE, " +
+                "s.PoolDeConexion as POOlDECONEXION " + // Si existe este campo
+                "FROM sicopbdc.tokens t " +
+                "JOIN sicopbdc.BasesDeDatos b ON b.idBasededatos = t.IDDISTRIBUIDOR " +
+                "JOIN sicopbdc.servidores s ON s.idservidor = b.idservidor " +
+                "WHERE t.TOKEN ='" + token + "'";
+        
+        
+        abrirConnectionAti();
+        if (connectionATI.executeQuery(sql)) {
+            if (connectionATI.next()) {
+                this.idMarcaBPM = connectionATI.getString("IDMARCA");
+                this.idDistribuidorBPM = connectionATI.getString("IDDISTRIBUIDOR");
+                this.poolNameBPM = connectionATI.getString("POOlDECONEXION");
+                this.baseNameBPM = connectionATI.getString("NOMBRE");
             }
         } else {
             setErrorMensaje(connectionATI.getErrorMessage());
@@ -582,6 +610,23 @@ public class CommonSeekopUtilities {
                     }
                 }
             }
+        }
+
+        return mail;
+    }
+    
+     public String getEmailBDC() {
+        String mail = "";
+        String sql = "SELECT \n"
+                + "    IdUsuario, eMail\n"
+                + "FROM\n"
+                + "    sicopbdc.usuarios\n"
+                + "WHERE\n"
+                + "    IdUsuario = '" + idEjecutivo + "';";
+        if (connectionATI.executeQuery(sql)) {
+            if (connectionATI.next()) {
+                mail = connectionATI.getString("eMail");
+            } 
         }
 
         return mail;
@@ -1363,9 +1408,16 @@ public class CommonSeekopUtilities {
         return str.replaceAll("\\s+", " ").trim();
     }
 
+    public void bpmReview(String idSeguimiento, String revision) {
+        bpmReview(idSeguimiento, revision, 1);
+    }
      
     public void bpmReview(String idReferencia, String revision, int intento) {
         String parametros = "&IdSeguimiento=" + idReferencia + "&Revisar=" + revision;
+        
+        email = getEmailBDC();
+        idEjecutivo = getIdEjecutivo();
+        getTokenInformationBPM(token);
 
         if ("5".equals(revision)) {
             parametros = "&IdProspecto=" + idReferencia + "&Revisar=" + revision;
@@ -1376,7 +1428,7 @@ public class CommonSeekopUtilities {
         
         String parametroSistema = getParametroDeSistema("URL", "BPM", SearchType.ORIGINAL, true);
 
-        String url = parametroSistema + "?IdDistribuidor=" + idDistribuidor + "&PoolName=" + poolName + "&IdMarca=" + idMarca + "&eMail=" + email + "&RegistryId=" + idUsuario + "&Token=" + getMD5Code() + parametros;
+        String url = parametroSistema + "?IdDistribuidor=" + idDistribuidorBPM + "&PoolName=" + poolNameBPM + "&IdMarca=" + idMarcaBPM + "&eMail=" + email + "&RegistryId=" + idEjecutivo + "&Token=" + getMD5Code() + parametros;
         insertBitacoraDetonacionMS(url, idReferencia, revision);
 
         String msj = requestURL(url), msjFormat;
@@ -1393,29 +1445,31 @@ public class CommonSeekopUtilities {
         }
 
         if (finish) {
-            com.aire.common.utilities.database.ConnectionManager con = new com.aire.common.utilities.database.ConnectionManager(poolName);
-
             try {
-                String query = "UPDATE " + dataBase + ".bitacoradetonacionms SET Respuesta = '" + msj + "'  WHERE Revisar = '" + revision + "' AND Respuesta = '' AND URL = '" + url + "' AND IdSeguimiento = '" + idReferencia + "';";
-                con.execute(query, false);
+                abrirConnectionDistribuidor(idDistribuidorBPM);
+                String query = "UPDATE " + baseNameBPM + ".bitacoradetonacionms SET Respuesta = '" + msj + "'  WHERE Revisar = '" + revision + "' AND Respuesta = '' AND URL = '" + url + "' AND IdSeguimiento = '" + idReferencia + "';";
+                if (!getConnectionDistribuidor().execute(query,false)) {
+                   setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                }
             } catch (Exception e) {
 
             } finally {
-                con.close();
+
             }
         }
     }
      
      protected void insertBitacoraDetonacionMS(String url, String idSeguimiento, String revision) {
-        com.aire.common.utilities.database.ConnectionManager con = new com.aire.common.utilities.database.ConnectionManager(poolName);
-
         try {
-            String query = "INSERT INTO " + dataBase + ".bitacoradetonacionms (Fecha, URL, Origen, IdSeguimiento, Respuesta, Revisar) VALUES ('" + getCurrentSQLDateTime() + "', '" + url + "', '" + origen + "', '" + idSeguimiento + "', '', '" + revision + "');";
-            con.execute(query, false);
+            abrirConnectionDistribuidor(idDistribuidorBPM);
+            String query = "INSERT INTO " + baseNameBPM + ".bitacoradetonacionms (Fecha, URL, Origen, IdSeguimiento, Respuesta, Revisar) VALUES ('" + getCurrentSQLDateTime() + "', '" + url + "', '" + origen + "', '" + idSeguimiento + "', '', '" + revision + "');";
+            if (!getConnectionDistribuidor().execute(query,false)) {
+               setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+            }
         } catch (Exception e) {
 
         } finally {
-            con.close();
+
         }
     }
      
@@ -1499,7 +1553,7 @@ public class CommonSeekopUtilities {
     }
     
     public final String getMD5Code() {
-        return getMD5Code(idUsuario);
+        return getMD5Code(idEjecutivo);
     }
 
     public final String getMD5Code(String registryId) {
@@ -1507,7 +1561,7 @@ public class CommonSeekopUtilities {
         try {
             Calendar c = Calendar.getInstance(TimeZone.getTimeZone("America/Mexico_City"));
             String str = "sicop.MX00000001.";
-            str += idMarca + ".";
+            str += idMarcaBPM + ".";
             str += email + ".";
             if (licencia != null) {
                 str += licencia + ".";
