@@ -160,11 +160,11 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                         String titulo = "Valuación reprogramada";
                                         String mensajeNotificacion = "El prospecto " + buscarNombreProspecto(idProspecto) + " reprogramó la valuación para el: " + nuevaFecha;
 
-                                        sendNotification("27",idValuador,titulo,mensajeNotificacion,dataObject);  
+                                        sendNotification("27",idValuador,titulo,mensajeNotificacion,dataObject);                                        
+                                       
                                     }
                                 } 
-                                
-                                
+                                      
                             Map<String, Object> parametersValuation = new HashMap<>();
                             SimpleDateFormat formatoEntrada = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
                             SimpleDateFormat formatoSalida = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -233,6 +233,7 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                     break;
                             }
                         }
+                        bpmReview(idSeguimiento,"1");
                     } else {
                         setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
                     }

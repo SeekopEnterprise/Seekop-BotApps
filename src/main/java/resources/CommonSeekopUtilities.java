@@ -24,10 +24,14 @@ import java.util.Locale;
 import java.util.Map;
 import javax.sql.DataSource;
 import com.google.gson.reflect.TypeToken;
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.GregorianCalendar;
+import java.util.StringTokenizer;
+import java.util.TimeZone;
 import org.json.JSONObject;
 
 public class CommonSeekopUtilities {
@@ -88,6 +92,15 @@ public class CommonSeekopUtilities {
     private String registro = "";
     
     private static String idDevice = "";
+    
+    private String origen = "4";
+    private String licencia = "S/D";
+    private String email;
+    private String poolNameBPM;
+    private String idMarcaBPM;
+    private String idDistribuidorBPM;
+    private String baseNameBPM;
+
 
     public enum SearchType {
         BRAND,
@@ -107,6 +120,34 @@ public class CommonSeekopUtilities {
                 this.registro = connectionATI.getString("REGISTRO");
                 abrirConnectionDistribuidor(connectionATI.getString("IDDISTRIBUIDOR"));
                 buscarDatosProspecto(this.idProspecto);
+            }
+        } else {
+            setErrorMensaje(connectionATI.getErrorMessage());
+        }
+
+    }
+
+    public void getTokenInformationBPM(String token) {
+        //String sql = "SELECT IDMARCA, IDDISTRIBUIDOR FROM sicopbdc.tokens WHERE TOKEN='" + token + "';";
+        
+        String sql = "SELECT " +
+                "t.IDMARCA as IDMARCA, " +
+                "t.IDDISTRIBUIDOR as IDDISTRIBUIDOR, " +
+                "b.NOMBRE AS NOMBRE, " +
+                "s.PoolDeConexion as POOlDECONEXION " + // Si existe este campo
+                "FROM sicopbdc.tokens t " +
+                "JOIN sicopbdc.BasesDeDatos b ON b.idBasededatos = t.IDDISTRIBUIDOR " +
+                "JOIN sicopbdc.servidores s ON s.idservidor = b.idservidor " +
+                "WHERE t.TOKEN ='" + token + "'";
+        
+        
+        abrirConnectionAti();
+        if (connectionATI.executeQuery(sql)) {
+            if (connectionATI.next()) {
+                this.idMarcaBPM = connectionATI.getString("IDMARCA");
+                this.idDistribuidorBPM = connectionATI.getString("IDDISTRIBUIDOR");
+                this.poolNameBPM = connectionATI.getString("POOlDECONEXION");
+                this.baseNameBPM = connectionATI.getString("NOMBRE");
             }
         } else {
             setErrorMensaje(connectionATI.getErrorMessage());
@@ -573,6 +614,23 @@ public class CommonSeekopUtilities {
 
         return mail;
     }
+    
+     public String getEmailBDC() {
+        String mail = "";
+        String sql = "SELECT \n"
+                + "    IdUsuario, eMail\n"
+                + "FROM\n"
+                + "    sicopbdc.usuarios\n"
+                + "WHERE\n"
+                + "    IdUsuario = '" + idEjecutivo + "';";
+        if (connectionATI.executeQuery(sql)) {
+            if (connectionATI.next()) {
+                mail = connectionATI.getString("eMail");
+            } 
+        }
+
+        return mail;
+    }
 
     public String getHabilitarSeminuevos(String idDistribuidor) {
         String dato = "";
@@ -862,6 +920,7 @@ public class CommonSeekopUtilities {
         }
         return valuador;
     }
+    
 
     public static String getParametroDeSistema(String process, String variable, SearchType searchType, boolean searchByProcess) {
         String result = "";
@@ -1349,4 +1408,183 @@ public class CommonSeekopUtilities {
         return str.replaceAll("\\s+", " ").trim();
     }
 
+    public void bpmReview(String idSeguimiento, String revision) {
+        bpmReview(idSeguimiento, revision, 1);
+    }
+     
+    public void bpmReview(String idReferencia, String revision, int intento) {
+        String parametros = "&IdSeguimiento=" + idReferencia + "&Revisar=" + revision;
+        
+        email = getEmailBDC();
+        idEjecutivo = getIdEjecutivo();
+        getTokenInformationBPM(token);
+
+        if ("5".equals(revision)) {
+            parametros = "&IdProspecto=" + idReferencia + "&Revisar=" + revision;
+        }
+
+        parametros += "&Origen=" + origen;
+        
+        
+        String parametroSistema = getParametroDeSistema("URL", "BPM", SearchType.ORIGINAL, true);
+
+        String url = parametroSistema + "?IdDistribuidor=" + idDistribuidorBPM + "&PoolName=" + poolNameBPM + "&IdMarca=" + idMarcaBPM + "&eMail=" + email + "&RegistryId=" + idEjecutivo + "&Token=" + getMD5Code() + parametros;
+        insertBitacoraDetonacionMS(url, idReferencia, revision);
+
+        String msj = requestURL(url), msjFormat;
+        boolean finish = false;
+
+        if (msj.contains("actividades") || msj.contains("Seguimiento procesado con")) {
+            msjFormat = msj.replace("valid: false, status: {{actividades: [", "").replace("]}}", "").replace("\"", "").replace("valid: false, status: {{actividades: [", "");
+            getTokenJson(msjFormat);
+            finish = true;
+        } else if (intento < 5) {
+            bpmReview(idReferencia, revision, intento + 1);
+        } else {
+            finish = true;
+        }
+
+        if (finish) {
+            try {
+                abrirConnectionDistribuidor(idDistribuidorBPM);
+                String query = "UPDATE " + baseNameBPM + ".bitacoradetonacionms SET Respuesta = '" + msj + "'  WHERE Revisar = '" + revision + "' AND Respuesta = '' AND URL = '" + url + "' AND IdSeguimiento = '" + idReferencia + "';";
+                if (!getConnectionDistribuidor().execute(query,false)) {
+                   setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                }
+            } catch (Exception e) {
+
+            } finally {
+
+            }
+        }
+    }
+     
+     protected void insertBitacoraDetonacionMS(String url, String idSeguimiento, String revision) {
+        try {
+            abrirConnectionDistribuidor(idDistribuidorBPM);
+            String query = "INSERT INTO " + baseNameBPM + ".bitacoradetonacionms (Fecha, URL, Origen, IdSeguimiento, Respuesta, Revisar) VALUES ('" + getCurrentSQLDateTime() + "', '" + url + "', '" + origen + "', '" + idSeguimiento + "', '', '" + revision + "');";
+            if (!getConnectionDistribuidor().execute(query,false)) {
+               setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+            }
+        } catch (Exception e) {
+
+        } finally {
+
+        }
+    }
+     
+     private String getTokenJson(String var) {
+        String token = "";
+        StringTokenizer st;
+        st = new StringTokenizer(var, ",");
+        boolean ban = true;
+        while (st.hasMoreTokens()) {
+            if (ban) {
+                token = st.nextToken();
+            }
+        }
+        return token;
+    }
+     
+     protected String requestURL(String URL) {
+        return requestURL(URL, null, null);
+    }
+
+    protected String requestURL(String URL, String content, String soapAction) {
+        String responseText;
+        try {
+            URL url = new URL(URL);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setInstanceFollowRedirects(false);
+            connection.setDefaultUseCaches(false);
+            connection.setUseCaches(false);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "text/xml; charset=ISO-8859-1");
+            connection.setRequestProperty("Charset", "ISO-8859-1");
+
+            if (soapAction != null) {
+
+                connection.setRequestProperty("SOAPAction", soapAction);
+            }
+
+            connection.setUseCaches(false);
+
+            if (content != null) {
+
+                BufferedWriter wr = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream(), "ISO-8859-1"));
+
+                wr.write("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" + content);
+                wr.flush();
+                wr.close();
+            }
+
+            try {
+                InputStreamReader reader = new InputStreamReader(connection.getInputStream());
+
+                if (connection.getResponseCode() == 200) {
+                    BufferedReader buffered = new BufferedReader(reader);
+                    StringBuilder builder = new StringBuilder();
+                    String line;
+                    while ((line = buffered.readLine()) != null) {
+                        builder.append(line);
+                    }
+                    responseText = builder.toString();
+                } else {
+                    responseText = "Error con status " + connection.getResponseCode();
+                }
+
+            } catch (IOException e) {
+                responseText = "Error con status " + connection.getResponseCode();
+            }
+
+            connection.disconnect();
+        } catch (IOException e) {
+            responseText = "Error en el procesamiento";
+        }
+
+        return responseText;
+    }
+    
+    public String getCurrentSQLDateTime() {
+        FormatManager fm = new FormatManager();
+        return fm.getCurrentSQLDateTime();
+    }
+    
+    public final String getMD5Code() {
+        return getMD5Code(idEjecutivo);
+    }
+
+    public final String getMD5Code(String registryId) {
+        String passwordInterface = "";
+        try {
+            Calendar c = Calendar.getInstance(TimeZone.getTimeZone("America/Mexico_City"));
+            String str = "sicop.MX00000001.";
+            str += idMarcaBPM + ".";
+            str += email + ".";
+            if (licencia != null) {
+                str += licencia + ".";
+            }
+            str += registryId + ".";
+            str += c.get(GregorianCalendar.YEAR) + ".";
+            str += (c.get(GregorianCalendar.MONTH) + 1) + ".";
+            str += c.get(GregorianCalendar.DAY_OF_MONTH);
+            MessageDigest digest = MessageDigest.getInstance("MD5");
+            char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+            byte[] bytes = digest.digest(str.getBytes());
+            StringBuilder MD5Temp = new StringBuilder(2 * bytes.length);
+            for (byte aByte : bytes) {
+                int bajo = aByte & 0x0f;
+                int alto = (aByte & 0xf0) >> 4;
+                MD5Temp.append(hex[alto]);
+                MD5Temp.append(hex[bajo]);
+            }
+            passwordInterface = MD5Temp.toString();
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("getMD5HashCode: " + e.toString());
+        }
+        return passwordInterface;
+    }
+     
 }

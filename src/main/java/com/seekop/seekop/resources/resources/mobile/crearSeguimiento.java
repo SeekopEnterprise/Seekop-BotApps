@@ -264,6 +264,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                         default:
                             break;
                     }
+                    bpmReview(idSeguimiento,"0");
                 } else {
                     setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
                 }
