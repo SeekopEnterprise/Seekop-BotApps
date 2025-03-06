@@ -233,7 +233,9 @@ public class reprogramarSeguimiento extends CommonSeekopUtilities {
                                     break;
                             }
                         }
-                        bpmReview(idSeguimiento,"1");
+                        if (idValuacion.isEmpty()) {
+                            bpmReview(idSeguimiento,"1");
+                        }
                     } else {
                         setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
                     }
