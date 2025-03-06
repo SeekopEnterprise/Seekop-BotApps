@@ -60,11 +60,14 @@ public class GetProspectoStatus extends CommonSeekopUtilities {
     private void conection() {
         boolean demos = false, valuaciones = false, citas = false, compra = false;
         String sql = "SELECT \n"
-                + "    IdProspecto\n"
+                + "    d.IdProspecto\n"
                 + "FROM\n"
-                + "    " + getDbDistribuidor() + ".demostraciones\n"
+                + "    " + getDbDistribuidor() + ".demostraciones d\n"
+                + "    LEFT JOIN " + getDbDistribuidor() + ".seguimientos s\n"
+                + "    ON d.IdSeguimiento = s.IdSeguimiento \n"
                 + "WHERE\n"
-                + "    IdProspecto = '" + getIdProspecto() + "' and Status='0'\n"
+                + "    d.IdProspecto = '" + getIdProspecto() + "' and d.Status='0'\n"
+                + " AND s.Cumplida = '1900-01-01 00:00:00' "
                 + "LIMIT 1;";
         if (getConnectionDistribuidor().executeQuery(sql)) {
             if (getConnectionDistribuidor().next()) {
