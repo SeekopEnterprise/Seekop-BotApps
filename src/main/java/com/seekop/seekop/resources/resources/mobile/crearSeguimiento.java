@@ -166,7 +166,7 @@ public class crearSeguimiento extends CommonSeekopUtilities {
                 + "    " + (traerValorConfiguracion("Multiseguimiento", "Migrar").equals("1")
                 ? getDbDistribuidor() : getDbMarca()) + ".tipoactividaddetalle\n"
                 + "WHERE\n"
-                + "    " + (auxActividad.equals("Cita") ? "Uso='102'" : "Nombre = '" + auxActividad + "'") + " AND Activo = '1';";
+                + "    " + (auxActividad.equals("Cita") ? "Uso='102'" : "Uso='4'") + " AND Activo = '1';";
 
         if (getConnectionDistribuidor().executeQuery(sql)) {
             if (getConnectionDistribuidor().next()) {
