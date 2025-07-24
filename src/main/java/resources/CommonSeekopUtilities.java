@@ -90,6 +90,9 @@ public class CommonSeekopUtilities {
     private String generoEjecutivo = "";
     private String idProspecto = "";
     private String registro = "";
+    private String placa = "";
+    private String vin = "";
+    private String destino = "";
     
     private static String idDevice = "";
     
@@ -110,7 +113,7 @@ public class CommonSeekopUtilities {
     }
 
     public void getTokenInformation(String token) {
-        String sql = "SELECT TOKEN, IDDISTRIBUIDOR, IDUSUARIO, ID, REGISTRO FROM sicopbdc.tokens WHERE TOKEN='" + token + "';";
+        String sql = "SELECT TOKEN, IDDISTRIBUIDOR, IDUSUARIO, ID, REGISTRO, VIN, PLACA, destino FROM sicopbdc.tokens WHERE TOKEN='" + token + "';";
         abrirConnectionAti();
         if (connectionATI.executeQuery(sql)) {
             if (connectionATI.next()) {
@@ -118,6 +121,9 @@ public class CommonSeekopUtilities {
                 this.idEjecutivo = connectionATI.getString("IDUSUARIO");
                 this.idProspecto = connectionATI.getString("ID");
                 this.registro = connectionATI.getString("REGISTRO");
+                this.placa = validarvacio(connectionATI.getString("PLACA"),"");
+                this.vin =validarvacio(connectionATI.getString("VIN"),"");
+                this.destino = validarvacio(connectionATI.getString("destino"),"");
                 abrirConnectionDistribuidor(connectionATI.getString("IDDISTRIBUIDOR"));
                 buscarDatosProspecto(this.idProspecto);
             }
@@ -585,6 +591,12 @@ public class CommonSeekopUtilities {
         return PoolDeConexion;
     }
 
+    public String getDestino() {
+        return destino;
+    }
+    
+    
+
     public String getEmalEjecutivo() {
         if (emalEjecutivo.equals("") || emalEjecutivo == null || emalEjecutivo.toLowerCase().equals("null")) {
             emalEjecutivo = getEmail(idEjecutivo);
@@ -848,6 +860,16 @@ public class CommonSeekopUtilities {
     public String getGeneroEjecutivo() {
         return generoEjecutivo;
     }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public String getVin() {
+        return vin;
+    }
+    
+    
 
     public String getNombreCompletoEjecutivo() {
         String nombreCompleto = "";

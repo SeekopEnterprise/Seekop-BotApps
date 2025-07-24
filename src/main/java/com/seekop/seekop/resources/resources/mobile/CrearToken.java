@@ -29,6 +29,9 @@ public class CrearToken extends CommonSeekopUtilities {
     //////
     private String idProspecto = "";
     private String idDistribuidor = "";
+    private String vin = "";
+    private String placa = "";
+    private String destino = "";
 
     public CrearToken(String contenido, String ip) {
         recibidoJSON = contenido;
@@ -40,6 +43,16 @@ public class CrearToken extends CommonSeekopUtilities {
                 this.ip = ip;
                 this.idProspecto = objetoJson.getString("IdProspecto");
                 this.idDistribuidor = objetoJson.getString("IdDistribuidor");
+                if (recibidoJSON.contains("vin")) {
+                    this.vin = objetoJson.getString("vin");
+                }
+                if (recibidoJSON.contains("placa")) {
+                    this.placa = objetoJson.getString("placa");
+                }
+                if (recibidoJSON.contains("destino")) {
+                    this.destino = objetoJson.getString("destino");
+                }
+
             } catch (JSONException ex) {
                 setErrorMensaje("JSON malformed: " + ex.toString());
             }
@@ -65,26 +78,78 @@ public class CrearToken extends CommonSeekopUtilities {
         buscarDatosProspecto(idProspecto);
         String nuevoToken = getGenerateToken(getIdMarca(), getIdDistribuidor(), getIdEjecutivo(), idProspecto, null, 10, 0);
         jsonBody = nuevoToken;
+    }
 
+    boolean updateVinPlaca(String token) {
+        boolean status = false;
+        int contador = -1;
+        String update = "";
+        if (!this.vin.isEmpty()) {
+            contador = -1;
+            status = false;
+            do {
+                update = "UPDATE `sicopbdc`.`tokens` SET `VIN` = '" + this.vin + "' WHERE (`TOKEN` = '" + token + "');";
+                status = getConnectionATI().executeUpdate(update, false);
+                if (status) {
+                    contador = 3;
+                } else {
+                    contador++;
+                }
+            } while (contador < 3);
+        }
+
+        if (!this.placa.isEmpty()) {
+            contador = -1;
+            status = false;
+            do {
+                update = "UPDATE `sicopbdc`.`tokens` SET `PLACA` = '" + this.placa + "' WHERE (`TOKEN` = '" + token + "');";
+                status = getConnectionATI().executeUpdate(update, false);
+                if (status) {
+                    contador = 3;
+                } else {
+                    contador++;
+                }
+            } while (contador < 3);
+        }
+        if (!this.destino.isEmpty()) {
+            contador = -1;
+            status = false;
+            do {
+                update = "UPDATE `sicopbdc`.`tokens` SET `destino` = '" + this.destino + "' WHERE (`TOKEN` = '" + token + "');";
+                status = getConnectionATI().executeUpdate(update, false);
+                if (status) {
+                    contador = 3;
+                } else {
+                    contador++;
+                }
+            } while (contador < 3);
+        }
+
+        return true;
     }
 
     private String getGenerateToken(String idMarca, String idDistribuidor, String idUsuario, String id, String vigencia, int length, int retry) {
         StringBuilder token = new StringBuilder(Long.toString(new GregorianCalendar().getTimeInMillis(), 36).toUpperCase());
         String alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-        if (getConnectionATI().executeQuery("Select Token From sicopbdc.Tokens Where IdMarca = '" + idMarca + "' And IdDistribuidor = '" + idDistribuidor + "' And IdUsuario = '" + idUsuario + "' And Id = '" + id + "'") && getConnectionATI().next()) {
+        if (getConnectionATI().executeQuery("Select Token From sicopbdc.Tokens "
+                + "Where IdMarca = '" + idMarca + "' And IdDistribuidor = '" + idDistribuidor + "' "
+                + "And IdUsuario = '" + idUsuario + "' And Id = '" + id + "'") && getConnectionATI().next()) {
             token = new StringBuilder(getConnectionATI().getString("Token"));
+            updateVinPlaca(token.toString());
         } else {
             Random random = new Random();
             while (token.length() < length) {
                 token.append(alpha.charAt(random.nextInt(alpha.length() + 1)));
             }
             boolean insertBoolean;
-            insertBoolean = getConnectionATI().execute("Insert Into sicopbdc.Tokens(Token, IdMarca, IdDistribuidor, IdUsuario, Id, Vigencia, Registro) Values('" + token.toString() + "','" + idMarca + "','" + idDistribuidor + "','" + idUsuario + "','" + id + "','" + (vigencia == null ? "1900-01-01" : vigencia) + "', Now());");
+            insertBoolean = getConnectionATI().execute("Insert Into "
+                    + "sicopbdc.Tokens(Token, IdMarca, IdDistribuidor, IdUsuario, Id, Vigencia, Registro) "
+                    + "Values('" + token.toString() + "','" + idMarca + "','" + idDistribuidor + "','" + idUsuario + "','" + id + "','" + (vigencia == null ? "1900-01-01" : vigencia) + "', Now());");
             if (!insertBoolean) {
                 if (retry < 5) {
                     return getGenerateToken(idMarca, idDistribuidor, idUsuario, id, vigencia, length, retry + 1);
-                }else{
-                    setErrorMensaje("Error al guardar el token '"+getConnectionATI().getErrorMessage()+"'");
+                } else {
+                    setErrorMensaje("Error al guardar el token '" + getConnectionATI().getErrorMessage() + "'");
                 }
             }
         }
@@ -108,15 +173,15 @@ public class CrearToken extends CommonSeekopUtilities {
             case 0:
                 respuesta = "{\n"
                         + "    \"codigo\": \"" + getStatus() + "\",\n"
-                        + "    \"mensaje\": \"" + getMensaje() + "\"\n"
+                        + "    \"mensaje\": \"" + getMensaje() + "\",\n"
                         + "    \"token\": null\n"
                         + "}";
                 break;
             case 1:
                 respuesta = "{\n"
                         + "    \"codigo\": \"" + getStatus() + "\",\n"
-                        + "    \"mensaje\": \"OK\"\n"
-                        + "    \"token\": \""+jsonBody+"\"\n"
+                        + "    \"mensaje\": \"OK\",\n"
+                        + "    \"token\": \"" + jsonBody + "\"\n"
                         + "}";
                 break;
         }
