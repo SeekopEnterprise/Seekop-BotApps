@@ -53,6 +53,7 @@ public class ProcessToken extends CommonSeekopUtilities {
 //            setErrorMensaje("Not JSON fount");
 //        }
         json = generaJSONRespuesta();
+        cargarRequestsApi();
         CloseConnection();
     }
     
@@ -77,6 +78,8 @@ public class ProcessToken extends CommonSeekopUtilities {
                 + "    \"destino\": \""+getDestino()+"\",\n"
                 + "    \"vin\": \""+getVin()+"\",\n"
                 + "    \"placa\": \""+getPlaca()+"\",\n"
+                + "    \"idAuto\": \""+getIdauto()+"\",\n"
+                + "    \"NombreAuto\": \""+getNombreAuto()+"\",\n"
                 + "    \"PoolName\": \""+getPoolDeConexion()+"\"\n"
                 + "}";
     }
@@ -106,7 +109,7 @@ public class ProcessToken extends CommonSeekopUtilities {
         fechafin = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(Calendar.getInstance().getTime());
         String bitacora = "INSERT INTO sicopdb.requestsapi\n"
                 + "(IdInterfaz, IdDistribuidor, Servicio, Operacion, Api, FechaInicio, FechaFin, Ip, Response, Request) \n"
-                + "VALUES ('MX00000SKP', '" + token + "', '" + descripcionServicio + "', 'POST', 'REST', '" + fechainicio + "', '" + fechafin + "', '" + ip + "', '" + json.replaceAll("'", "").replaceAll("\r", "").replaceAll("\n", "").replaceAll("\t", "") + "', '" + jsonMandado.replaceAll("'", "").replaceAll("\r", "").replaceAll("\n", "").replaceAll("\t", "") + "');";
+                + "VALUES ('MX00000SKP', '" + "', '" + descripcionServicio + "', 'POST', 'REST', '" + fechainicio + "', '" + fechafin + "', '" + ip + "', '" + json.replaceAll("'", "").replaceAll("\r", "").replaceAll("\n", "").replaceAll("\t", "") + "', '" + jsonMandado.replaceAll("'", "").replaceAll("\r", "").replaceAll("\n", "").replaceAll("\t", "") + "');";
         if (getConnectionATI().execute(bitacora, false)) {
         } else {
             setErrorMensaje(getConnectionATI().getErrorMessage());

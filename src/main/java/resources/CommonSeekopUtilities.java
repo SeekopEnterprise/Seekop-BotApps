@@ -93,9 +93,9 @@ public class CommonSeekopUtilities {
     private String placa = "";
     private String vin = "";
     private String destino = "";
-    
+
     private static String idDevice = "";
-    
+
     private String origen = "4";
     private String licencia = "S/D";
     private String email;
@@ -104,26 +104,26 @@ public class CommonSeekopUtilities {
     private String idDistribuidorBPM;
     private String baseNameBPM;
 
-
     public enum SearchType {
         BRAND,
         DEALER,
         BDC,
         ORIGINAL
     }
-
+    
+    
     public void getTokenInformation(String token) {
-        String sql = "SELECT TOKEN, IDDISTRIBUIDOR, IDUSUARIO, ID, REGISTRO, VIN, PLACA, destino FROM sicopbdc.tokens WHERE TOKEN='" + token + "';";
+        String sql = "SELECT TOKEN, IDDISTRIBUIDOR, IDUSUARIO, ID, REGISTRO, VIN, PLACA, destino FROM sicopbdc.tokens WHERE TOKEN='" + token + "' or ID='" + token + "';";
         abrirConnectionAti();
         if (connectionATI.executeQuery(sql)) {
             if (connectionATI.next()) {
-                this.token = token;
+                this.token =  connectionATI.getString("TOKEN");
                 this.idEjecutivo = connectionATI.getString("IDUSUARIO");
                 this.idProspecto = connectionATI.getString("ID");
                 this.registro = connectionATI.getString("REGISTRO");
-                this.placa = validarvacio(connectionATI.getString("PLACA"),"");
-                this.vin =validarvacio(connectionATI.getString("VIN"),"");
-                this.destino = validarvacio(connectionATI.getString("destino"),"");
+                this.placa = validarvacio(connectionATI.getString("PLACA"), "");
+                this.vin = validarvacio(connectionATI.getString("VIN"), "");
+                this.destino = validarvacio(connectionATI.getString("destino"), "");
                 abrirConnectionDistribuidor(connectionATI.getString("IDDISTRIBUIDOR"));
                 buscarDatosProspecto(this.idProspecto);
             }
@@ -135,18 +135,18 @@ public class CommonSeekopUtilities {
 
     public void getTokenInformationBPM(String token) {
         //String sql = "SELECT IDMARCA, IDDISTRIBUIDOR FROM sicopbdc.tokens WHERE TOKEN='" + token + "';";
-        
-        String sql = "SELECT " +
-                "t.IDMARCA as IDMARCA, " +
-                "t.IDDISTRIBUIDOR as IDDISTRIBUIDOR, " +
-                "b.NOMBRE AS NOMBRE, " +
-                "s.PoolDeConexion as POOlDECONEXION " + // Si existe este campo
-                "FROM sicopbdc.tokens t " +
-                "JOIN sicopbdc.BasesDeDatos b ON b.idBasededatos = t.IDDISTRIBUIDOR " +
-                "JOIN sicopbdc.servidores s ON s.idservidor = b.idservidor " +
-                "WHERE t.TOKEN ='" + token + "'";
-        
-        
+
+        String sql = "SELECT "
+                + "t.IDMARCA as IDMARCA, "
+                + "t.IDDISTRIBUIDOR as IDDISTRIBUIDOR, "
+                + "b.NOMBRE AS NOMBRE, "
+                + "s.PoolDeConexion as POOlDECONEXION "
+                + // Si existe este campo
+                "FROM sicopbdc.tokens t "
+                + "JOIN sicopbdc.BasesDeDatos b ON b.idBasededatos = t.IDDISTRIBUIDOR "
+                + "JOIN sicopbdc.servidores s ON s.idservidor = b.idservidor "
+                + "WHERE t.TOKEN ='" + token + "'";
+
         abrirConnectionAti();
         if (connectionATI.executeQuery(sql)) {
             if (connectionATI.next()) {
@@ -330,9 +330,12 @@ public class CommonSeekopUtilities {
         }
     }
 
+    String idauto = "";
+    String nombreAuto = "";
+
     public void buscarDatosProspecto(String idProspecto) {
         String sql = "SELECT \n"
-                + "    IdProspecto, Nombre, Paterno, Materno, idpropietario, activo\n"
+                + "    IdProspecto, Nombre, Paterno, Materno, idpropietario, activo, IdAuto\n"
                 + "FROM\n"
                 + "    " + getDbDistribuidor() + ".prospectos\n"
                 + "WHERE\n"
@@ -340,14 +343,42 @@ public class CommonSeekopUtilities {
         if (getConnectionDistribuidor().executeQuery(sql)) {
             if (getConnectionDistribuidor().next()) {
                 this.idProspecto = validarvacio(getConnectionDistribuidor().getString("IdProspecto"), "");
+                this.idauto = validarvacio(getConnectionDistribuidor().getString("IdAuto"), "");
+                buscarAutoProspecto(idauto);
                 buscarEjecutivo(validarvacio(getConnectionDistribuidor().getString("idpropietario"), ""));
             } else {
                 setErrorMensaje("No se encontraron datos para el prospecto '" + idProspecto + "'");
             }
         }
     }
-    
-     public String buscarNombreProspecto(String idProspecto) {
+
+    public void buscarAutoProspecto(String idAuto) {
+        String sql = "SELECT \n"
+                + "    Nombre\n"
+                + "FROM\n"
+                + "    sicopdb.autos\n"
+                + "where idauto='" + idAuto + "';";
+        if (getConnectionDistribuidor().executeQuery(sql)) {
+            if (getConnectionDistribuidor().next()) {
+                this.nombreAuto = validarvacio(getConnectionDistribuidor().getString("Nombre"), "");
+            } else {
+                 sql = "SELECT \n"
+                + "    Nombre\n"
+                + "FROM\n"
+                + "    sicopbdc.autos\n"
+                + "where idauto='" + idAuto + "';";
+                if (getConnectionDistribuidor().executeQuery(sql)) {
+                    if (getConnectionDistribuidor().next()) {
+                        this.nombreAuto = validarvacio(getConnectionDistribuidor().getString("Nombre"), "");
+                    } else {
+                        setErrorMensaje("No se encontraron datos para el prospecto '" + idProspecto + "'");
+                    }
+                }
+            }
+        }
+    }
+
+    public String buscarNombreProspecto(String idProspecto) {
         String nombre = "";
         String sql = "SELECT \n"
                 + "    IdProspecto, Nombre, Paterno, Materno, idpropietario, activo\n"
@@ -357,7 +388,7 @@ public class CommonSeekopUtilities {
                 + "    idprospecto = '" + idProspecto + "';";
         if (getConnectionDistribuidor().executeQuery(sql)) {
             if (getConnectionDistribuidor().next()) {
-                return nombre = validarvacio(getConnectionDistribuidor().getString("Nombre"), "") + " " + validarvacio(getConnectionDistribuidor().getString("Paterno"), "") +  " " + validarvacio(getConnectionDistribuidor().getString("Materno"), "");
+                return nombre = validarvacio(getConnectionDistribuidor().getString("Nombre"), "") + " " + validarvacio(getConnectionDistribuidor().getString("Paterno"), "") + " " + validarvacio(getConnectionDistribuidor().getString("Materno"), "");
             } else {
                 setErrorMensaje("No se encontraron datos para el prospecto '" + idProspecto + "'");
                 return "";
@@ -594,8 +625,14 @@ public class CommonSeekopUtilities {
     public String getDestino() {
         return destino;
     }
-    
-    
+
+    public String getIdauto() {
+        return idauto;
+    }
+
+    public String getNombreAuto() {
+        return nombreAuto;
+    }
 
     public String getEmalEjecutivo() {
         if (emalEjecutivo.equals("") || emalEjecutivo == null || emalEjecutivo.toLowerCase().equals("null")) {
@@ -626,8 +663,8 @@ public class CommonSeekopUtilities {
 
         return mail;
     }
-    
-     public String getEmailBDC() {
+
+    public String getEmailBDC() {
         String mail = "";
         String sql = "SELECT \n"
                 + "    IdUsuario, eMail\n"
@@ -638,7 +675,7 @@ public class CommonSeekopUtilities {
         if (connectionATI.executeQuery(sql)) {
             if (connectionATI.next()) {
                 mail = connectionATI.getString("eMail");
-            } 
+            }
         }
 
         return mail;
@@ -707,15 +744,11 @@ public class CommonSeekopUtilities {
         if (isApuntadoSeminuevo()) {
             String tipoClave = traerValorConfiguracion("Valuacion", "HabilitarPreciosLibroAzul");
             String isDalton = traerValorConfiguracion("Habilitar", "EstatusInventario");
-            
-            if(isDalton.equals("1"))
-            {
+
+            if (isDalton.equals("1")) {
                 clave = "And " + apostrofe + ".Clave IN ('DLTN') \n";
-            }
-            else
-            {
-                switch (tipoClave) 
-                {
+            } else {
+                switch (tipoClave) {
                     case "1":
                         clave = "And " + apostrofe + ".Clave IN ('sbb') \n";
                         break;
@@ -724,10 +757,10 @@ public class CommonSeekopUtilities {
                         break;
                     default:
                         clave = "And " + apostrofe + ".Clave NOT IN ('sbb', 'atm') \n";
-                    break;
+                        break;
                 }
             }
-            
+
             if (getIdPais().equals("EC")) {
                 clave = "And " + apostrofe + ".Clave IN ('LAE') \n";
             }
@@ -868,8 +901,6 @@ public class CommonSeekopUtilities {
     public String getVin() {
         return vin;
     }
-    
-    
 
     public String getNombreCompletoEjecutivo() {
         String nombreCompleto = "";
@@ -942,7 +973,6 @@ public class CommonSeekopUtilities {
         }
         return valuador;
     }
-    
 
     public static String getParametroDeSistema(String process, String variable, SearchType searchType, boolean searchByProcess) {
         String result = "";
@@ -1084,7 +1114,7 @@ public class CommonSeekopUtilities {
                     }
                 }
                 //NOTE:DEJAR POR SI NECESITO DEBUGEAR
-                 /*else {
+                /*else {
                     // Leer la respuesta de error del servidor
                     BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
                     StringBuilder errorResponse = new StringBuilder();
@@ -1191,30 +1221,29 @@ public class CommonSeekopUtilities {
 
         return fechaF;
     }
-    
-    public Boolean sendDispositionValuation(String idValuacion, String activityId, Boolean tienePropuesta,Map<String, Object> parametersAux) {
-        
+
+    public Boolean sendDispositionValuation(String idValuacion, String activityId, Boolean tienePropuesta, Map<String, Object> parametersAux) {
+
         Map<String, Object> parameters = new HashMap<>();
         String propuesta = "0";
-        
-        if(tienePropuesta)
-        {
+
+        if (tienePropuesta) {
             propuesta = getPropuestaValuacion(idValuacion);
         }
-        
+
         parameters.put("idvaluacion", idValuacion);
-        parameters.put("precio_valuacion",tienePropuesta ? propuesta : null);
+        parameters.put("precio_valuacion", tienePropuesta ? propuesta : null);
         parameters.put("fecha", getFechaHoy());
-        
+
         if (parametersAux != null && !parametersAux.isEmpty()) {
             parameters.putAll(parametersAux);
         }
-        
+
         sendDispositionRealTime(activityId, getIdDistribuidor(), getIdProspecto(), parameters);
-        
+
         return true;
     }
-    
+
     public String getPropuestaValuacion(String idValuacion) {
         String propuestaActual = "0";
 
@@ -1241,20 +1270,18 @@ public class CommonSeekopUtilities {
                 } else if (!"0".equals(getConnectionDistribuidor().getString("Propuesta1"))) {
                     propuestaActual = getConnectionDistribuidor().getString("Propuesta1");
                 }
-            } 
+            }
 
         }
         getTokenInformation(token);
-        
+
         int numeroSinDecimales = (int) Double.parseDouble(propuestaActual);
         String resultado = Integer.toString(numeroSinDecimales);
 
         return resultado;
     }
-    
-    protected void sendNotification(String id, String idEjecutivo,String titulo, String mensaje,JSONObject dataObject) 
-    
-    {
+
+    protected void sendNotification(String id, String idEjecutivo, String titulo, String mensaje, JSONObject dataObject) {
         try {
 
             String urlNotifications = traerValorConfiguracion("Notificaciones", "UrlNotificaciones");
@@ -1265,12 +1292,12 @@ public class CommonSeekopUtilities {
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json; utf-8");
             conn.setRequestProperty("Accept", "application/json");
-            
+
             String token = generateMD5Code(false);
             conn.setRequestProperty("Token", token);
-            
+
             conn.setDoOutput(true);
-            
+
             // Crear el objeto JSON principal
             JSONObject jsonObject = new JSONObject();
 
@@ -1286,9 +1313,10 @@ public class CommonSeekopUtilities {
 
             // Convertir el objeto JSON a String
             String jsonString = jsonObject.toString();
-            
+
             Gson gson = new Gson();
-            Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
+            Type mapType = new TypeToken<Map<String, Object>>() {
+            }.getType();
             Map<String, Object> jsonMap = gson.fromJson(jsonString, mapType);
 
             String json = gson.toJson(jsonMap);
@@ -1309,15 +1337,14 @@ public class CommonSeekopUtilities {
                     }
                     //NOTE: DEJAR POR SI NECESITO DEBUGEAR
                     try {
-                    Map<String, Object> responseMap = gson.fromJson(response.toString(), Map.class);
-                    System.out.println("Respuesta: " + responseMap);
+                        Map<String, Object> responseMap = gson.fromJson(response.toString(), Map.class);
+                        System.out.println("Respuesta: " + responseMap);
                     } catch (Exception e) {
-                    e.printStackTrace();
+                        e.printStackTrace();
                     }
                 }
-            }
-            //NOTE:DEJAR POR SI NECESITO DEBUGEAR
-             else {
+            } //NOTE:DEJAR POR SI NECESITO DEBUGEAR
+            else {
                 // Leer la respuesta de error del servidor
                 BufferedReader errorReader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), "utf-8"));
                 StringBuilder errorResponse = new StringBuilder();
@@ -1332,46 +1359,41 @@ public class CommonSeekopUtilities {
             e.printStackTrace();
         }
     }
-    
+
     protected String generateMD5Code(boolean strict) {
-        
-        try
-        {
+
+        try {
             String s = "sicop.";
-            if(strict)
-            {
-                 s = s + idMarca + ".";
-                 s = s + idDistribuidor + ".";
-                 s = s + idDevice + ".";
+            if (strict) {
+                s = s + idMarca + ".";
+                s = s + idDistribuidor + ".";
+                s = s + idDevice + ".";
             }
-            
+
             s = s + GregorianCalendar.getInstance().get(1) + ".";
             s = s + (GregorianCalendar.getInstance().get(2) + 1) + ".";
             s = s + GregorianCalendar.getInstance().get(5);
-            
+
             MessageDigest digest = MessageDigest.getInstance("MD5");
             char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
             byte[] bytes = digest.digest(s.getBytes());
             StringBuilder MD5Temp = new StringBuilder(2 * bytes.length);
-            
-            for (int i = 0; i < bytes.length; i++) 
-            {
+
+            for (int i = 0; i < bytes.length; i++) {
                 int bajo = bytes[i] & 0xF;
                 int alto = (bytes[i] & 0xF0) >> 4;
                 MD5Temp.append(hex[alto]);
                 MD5Temp.append(hex[bajo]);
             }
-            
+
             return MD5Temp.toString();
-        }
-        catch(NoSuchAlgorithmException e)
-        {
+        } catch (NoSuchAlgorithmException e) {
             System.out.println("getMD5HashCode: " + e.toString());
         }
-        
+
         return null;
     }
-    
+
     public static String formatTimestamp(String originalTimestamp) {
         try {
             SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.S");
@@ -1384,11 +1406,10 @@ public class CommonSeekopUtilities {
         }
     }
 
-    public String getIdCheckList(String idValuacion,String idProspecto,String distribuidor,boolean openConection) {
+    public String getIdCheckList(String idValuacion, String idProspecto, String distribuidor, boolean openConection) {
 
         String idCheckList = "";
-        if(openConection)
-        {
+        if (openConection) {
             AbrirConnectionSeminuevos();
         }
 
@@ -1404,14 +1425,13 @@ public class CommonSeekopUtilities {
                 idCheckList = getConnectionDistribuidor().getString("IdChecklist");
             }
         }
-        if(openConection)
-        {
+        if (openConection) {
             getTokenInformation(token);
         }
         return idCheckList;
     }
-    
-     public static String capitalize(String str) {
+
+    public static String capitalize(String str) {
         String[] words = removeMultipleSpaces(str).split(" ");
         StringBuilder capitalized = new StringBuilder();
 
@@ -1425,18 +1445,18 @@ public class CommonSeekopUtilities {
 
         return capitalized.toString().trim();
     }
-     
-     public static String removeMultipleSpaces(String str) {
+
+    public static String removeMultipleSpaces(String str) {
         return str.replaceAll("\\s+", " ").trim();
     }
 
     public void bpmReview(String idSeguimiento, String revision) {
         bpmReview(idSeguimiento, revision, 1);
     }
-     
+
     public void bpmReview(String idReferencia, String revision, int intento) {
         String parametros = "&IdSeguimiento=" + idReferencia + "&Revisar=" + revision;
-        
+
         email = getEmailBDC();
         idEjecutivo = getIdEjecutivo();
         getTokenInformationBPM(token);
@@ -1446,8 +1466,7 @@ public class CommonSeekopUtilities {
         }
 
         parametros += "&Origen=" + origen;
-        
-        
+
         String parametroSistema = getParametroDeSistema("URL", "BPM", SearchType.ORIGINAL, true);
 
         String url = parametroSistema + "?IdDistribuidor=" + idDistribuidorBPM + "&PoolName=" + poolNameBPM + "&IdMarca=" + idMarcaBPM + "&eMail=" + email + "&RegistryId=" + idEjecutivo + "&Token=" + getMD5Code() + parametros;
@@ -1470,8 +1489,8 @@ public class CommonSeekopUtilities {
             try {
                 abrirConnectionDistribuidor(idDistribuidorBPM);
                 String query = "UPDATE " + baseNameBPM + ".bitacoradetonacionms SET Respuesta = '" + msj + "'  WHERE Revisar = '" + revision + "' AND Respuesta = '' AND URL = '" + url + "' AND IdSeguimiento = '" + idReferencia + "';";
-                if (!getConnectionDistribuidor().execute(query,false)) {
-                   setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+                if (!getConnectionDistribuidor().execute(query, false)) {
+                    setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
                 }
             } catch (Exception e) {
 
@@ -1480,13 +1499,13 @@ public class CommonSeekopUtilities {
             }
         }
     }
-     
-     protected void insertBitacoraDetonacionMS(String url, String idSeguimiento, String revision) {
+
+    protected void insertBitacoraDetonacionMS(String url, String idSeguimiento, String revision) {
         try {
             abrirConnectionDistribuidor(idDistribuidorBPM);
             String query = "INSERT INTO " + baseNameBPM + ".bitacoradetonacionms (Fecha, URL, Origen, IdSeguimiento, Respuesta, Revisar) VALUES ('" + getCurrentSQLDateTime() + "', '" + url + "', '" + origen + "', '" + idSeguimiento + "', '', '" + revision + "');";
-            if (!getConnectionDistribuidor().execute(query,false)) {
-               setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
+            if (!getConnectionDistribuidor().execute(query, false)) {
+                setErrorMensaje("Error= " + getConnectionDistribuidor().getErrorMessage());
             }
         } catch (Exception e) {
 
@@ -1494,8 +1513,8 @@ public class CommonSeekopUtilities {
 
         }
     }
-     
-     private String getTokenJson(String var) {
+
+    private String getTokenJson(String var) {
         String token = "";
         StringTokenizer st;
         st = new StringTokenizer(var, ",");
@@ -1507,8 +1526,8 @@ public class CommonSeekopUtilities {
         }
         return token;
     }
-     
-     protected String requestURL(String URL) {
+
+    protected String requestURL(String URL) {
         return requestURL(URL, null, null);
     }
 
@@ -1568,12 +1587,12 @@ public class CommonSeekopUtilities {
 
         return responseText;
     }
-    
+
     public String getCurrentSQLDateTime() {
         FormatManager fm = new FormatManager();
         return fm.getCurrentSQLDateTime();
     }
-    
+
     public final String getMD5Code() {
         return getMD5Code(idEjecutivo);
     }
@@ -1608,5 +1627,5 @@ public class CommonSeekopUtilities {
         }
         return passwordInterface;
     }
-     
+
 }

@@ -151,6 +151,8 @@ public class CrearToken extends CommonSeekopUtilities {
                 } else {
                     setErrorMensaje("Error al guardar el token '" + getConnectionATI().getErrorMessage() + "'");
                 }
+            } else {
+                updateVinPlaca(token.toString());
             }
         }
         return token.toString();
