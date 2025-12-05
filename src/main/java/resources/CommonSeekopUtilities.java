@@ -344,8 +344,9 @@ public class CommonSeekopUtilities {
             if (getConnectionDistribuidor().next()) {
                 this.idProspecto = validarvacio(getConnectionDistribuidor().getString("IdProspecto"), "");
                 this.idauto = validarvacio(getConnectionDistribuidor().getString("IdAuto"), "");
+                this.idEjecutivo = validarvacio(getConnectionDistribuidor().getString("idpropietario"), "");
                 buscarAutoProspecto(idauto);
-                buscarEjecutivo(validarvacio(getConnectionDistribuidor().getString("idpropietario"), ""));
+                buscarEjecutivo(idEjecutivo);
             } else {
                 setErrorMensaje("No se encontraron datos para el prospecto '" + idProspecto + "'");
             }
